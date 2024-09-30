@@ -1,34 +1,73 @@
-import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Header from './layouts/Header';
+// ./src/App.tsx
+import React, { useContext } from 'react';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import Header from './components/Header'; // Updated import path
+import Sidebar from './components/Sidebar';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Home from './pages/Home'; // Assuming Home is in pages folder
+import { AuthContext } from './contexts/AuthContext';
 
 const App: React.FC = () => {
+  const { user } = useContext(AuthContext);
+
+
   return (
     <Router>
-      <div className="flex flex-col min-h-screen">
-        <Header />
-        <main className="flex-grow container mx-auto p-4">
-          <Routes>
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/" element={<Home />} /> {/* 添加主页路由 */}
-          </Routes>
-        </main>
-      </div>
+      <Routes>
+        {/* Public Routes with Header */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<Login />} />
+        </Route>
+
+        {/* Protected Routes with Sidebar */}
+        <Route
+          path="/dashboard/*"
+          element={
+            user ? (
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Fallback Route */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 };
 
-// 简单的主页组件
-const Home: React.FC = () => (
-  <div className="text-center">
-    <h1 className="text-4xl font-bold mb-4">Welcome to My Blog</h1>
-    <p className="text-lg">Share your thoughts with the world!</p>
+// Public Layout Component with Header
+const PublicLayout: React.FC = () => (
+  <div className="flex flex-col min-h-screen">
+    <Header />
+    <main className="flex-grow container mx-auto p-4">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </main>
   </div>
 );
+
+// Dashboard Layout Component with Sidebar
+const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <div className="flex">
+      <Sidebar />
+      <main className="flex-grow container mx-auto p-4">
+        {children}
+      </main>
+    </div>
+  );
+};
 
 export default App;

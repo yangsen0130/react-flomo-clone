@@ -1,3 +1,4 @@
+// ./src/pages/Register.tsx
 import React, { useState, useContext } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { LeanCloudError } from '../services/authService';

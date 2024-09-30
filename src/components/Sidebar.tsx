@@ -1,10 +1,12 @@
 // ./src/components/Sidebar.tsx
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { FaHome, FaBlog, FaUser, FaCog, FaBars, FaTimes } from 'react-icons/fa';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user } = useContext(AuthContext); // Access user from context
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -23,6 +25,14 @@ const Sidebar: React.FC = () => {
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 md:static md:flex-shrink-0`}
       >
+        {/* User Information at the Top */}
+        {user && (
+          <div className="mb-6 p-4 bg-blue-200 rounded-md">
+            <p className="font-semibold">Logged in as:</p>
+            <p>{user.email}</p>
+          </div>
+        )}
+
         <h2 className="text-2xl font-semibold mb-6">Dashboard Menu</h2>
         <nav className="space-y-4">
           <NavLink
