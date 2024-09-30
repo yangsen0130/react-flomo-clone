@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { register, LeanCloudError } from '../services/authService';
 
 const Register: React.FC = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [message, setMessage] = useState('');
 
-    const handleSubmit = async (e: React.FormEvent) => {
-      e.preventDefault();
-      try {
-        await register(email, password);
-        setMessage('Registration successful. Please check your email for verification.');
-      } catch (error) {
-        const leanCloudError = error as LeanCloudError;
-        setMessage(leanCloudError.error || 'Registration failed');
-      }
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await register(email, password);
+      setMessage('Registration successful. Please check your email for verification.');
+    } catch (error) {
+      const leanCloudError = error as LeanCloudError;
+      setMessage(leanCloudError.error || 'Registration failed');
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
