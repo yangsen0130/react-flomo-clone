@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+// ./src/pages/Dashboard.tsx
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import {
@@ -13,12 +14,11 @@ import {
   addTagToBlog,
   removeTagFromBlog,
 } from '../services/blogService';
+import CreateBlogForm from '../components/CreateBlogForm'; // New import
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
@@ -45,32 +45,22 @@ const Dashboard: React.FC = () => {
     fetchUserAndBlogs();
   }, [user, navigate]);
 
-  const handleCreateBlog = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const newBlog = await createBlog(title, content);
-      setBlogs([newBlog, ...blogs]);
-      setTitle('');
-      setContent('');
-      setMessage('Blog created successfully.');
-    } catch (error) {
-      const leanCloudError = error as { error: string };
-      setMessage(leanCloudError.error || 'Failed to create blog.');
-    }
-  };
-
-  const handleEditBlog = (blog: Blog) => {
+  const handleEditInitiate = (blog: Blog) => {
     setEditingBlogId(blog.objectId);
     setEditTitle(blog.title);
     setEditContent(blog.content);
   };
 
-  const handleUpdateBlog = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingBlogId) return;
+  const handleEditCancel = () => {
+    setEditingBlogId(null);
+    setEditTitle('');
+    setEditContent('');
+  };
+
+  const handleEditSave = async (blogId: string) => {
     try {
-      const updatedBlog = await updateBlog(editingBlogId, editTitle, editContent);
-      setBlogs(blogs.map((blog) => (blog.objectId === editingBlogId ? updatedBlog : blog)));
+      const updatedBlog = await updateBlog(blogId, editTitle, editContent);
+      setBlogs(blogs.map((blog) => (blog.objectId === blogId ? updatedBlog : blog)));
       setEditingBlogId(null);
       setEditTitle('');
       setEditContent('');
@@ -107,86 +97,16 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleCreateBlog = (newBlog: Blog) => {
+    setBlogs([newBlog, ...blogs]);
+  };
+
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
   return (
     <div className="mt-8">
-      {/* Create Blog Form */}
-      <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold mb-4">Create a New Blog</h3>
-        <form onSubmit={handleCreateBlog} className="space-y-4">
-          <div>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Blog Title"
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Blog Content"
-              required
-              className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={4}
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition"
-          >
-            Create Blog
-          </button>
-        </form>
-      </div>
-
-      {/* Edit Blog Form */}
-      {editingBlogId && (
-        <div className="mb-8 p-6 bg-yellow-100 rounded-lg shadow-md">
-          <h3 className="text-xl font-semibold mb-4">Edit Blog</h3>
-          <form onSubmit={handleUpdateBlog} className="space-y-4">
-            <div>
-              <input
-                type="text"
-                value={editTitle}
-                onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="Blog Title"
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-              />
-            </div>
-            <div>
-              <textarea
-                value={editContent}
-                onChange={(e) => setEditContent(e.target.value)}
-                placeholder="Blog Content"
-                required
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                rows={4}
-              />
-            </div>
-            <div className="flex space-x-4">
-              <button
-                type="submit"
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
-              >
-                Update Blog
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingBlogId(null)}
-                className="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
-      )}
+      {/* Create Blog Form Component */}
+      <CreateBlogForm onCreate={handleCreateBlog} />
 
       {message && <p className="text-center text-green-500 mb-4">{message}</p>}
 
@@ -199,10 +119,29 @@ const Dashboard: React.FC = () => {
           <ul className="space-y-4">
             {blogs.map((blog) => (
               <li key={blog.objectId} className="p-4 bg-white rounded-lg shadow-md">
-                <h4 className="text-lg font-semibold">{blog.title}</h4>
-                <p className="text-gray-700">
-                  {blog.content ? `${blog.content.substring(0, 100)}...` : 'No content available'}
-                </p>
+                {editingBlogId === blog.objectId ? (
+                  <div>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full px-4 py-2 border rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      rows={4}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <h4 className="text-lg font-semibold">{blog.title}</h4>
+                    <p className="text-gray-700">
+                      {blog.content ? `${blog.content.substring(0, 100)}...` : 'No content available'}
+                    </p>
+                  </div>
+                )}
                 <small className="text-gray-500">
                   Created at: {new Date(blog.createdAt).toLocaleString()}
                 </small>
@@ -223,24 +162,43 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
                 <div className="mt-2 flex space-x-2">
-                  <button
-                    onClick={() => handleEditBlog(blog)}
-                    className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteBlog(blog.objectId)}
-                    className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
-                  >
-                    Delete
-                  </button>
-                  <button
-                    onClick={() => handleManageTags(blog)}
-                    className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition"
-                  >
-                    Manage Tags
-                  </button>
+                  {editingBlogId === blog.objectId ? (
+                    <>
+                      <button
+                        onClick={() => handleEditSave(blog.objectId)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                      >
+                        Save
+                      </button>
+                      <button
+                        onClick={handleEditCancel}
+                        className="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600 transition"
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => handleEditInitiate(blog)}
+                        className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBlog(blog.objectId)}
+                        className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => handleManageTags(blog)}
+                        className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition"
+                      >
+                        Manage Tags
+                      </button>
+                    </>
+                  )}
                 </div>
               </li>
             ))}
