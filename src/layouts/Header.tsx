@@ -1,35 +1,29 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { getCurrentUser, logout } from '../services/authService';
+import { AuthContext } from '../contexts/AuthContext';
 
 const Header: React.FC = () => {
-  const [user, setUser] = React.useState<any>(null);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
-
-  React.useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        setUser(null);
-      }
-    };
-    fetchUser();
-  }, []);
 
   const handleLogout = () => {
     logout();
-    setUser(null);
     navigate('/login');
   };
 
   return (
     <header className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
-        <Link to="/" className="text-xl font-bold">
-          My Blog
-        </Link>
+        <div className="flex items-center space-x-4">
+          <Link to="/" className="text-xl font-bold">
+            My Blog
+          </Link>
+          {user && (
+            <span className="text-md">
+              Welcome, {user.email}
+            </span>
+          )}
+        </div>
         <nav>
           <ul className="flex space-x-4">
             {user ? (
@@ -40,7 +34,10 @@ const Header: React.FC = () => {
                   </Link>
                 </li>
                 <li>
-                  <button onClick={handleLogout} className="hover:text-gray-300">
+                  <button
+                    onClick={handleLogout}
+                    className="hover:text-gray-300 focus:outline-none"
+                  >
                     Logout
                   </button>
                 </li>

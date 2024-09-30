@@ -1,16 +1,23 @@
-import React, { useState } from 'react';
-import { register, LeanCloudError } from '../services/authService';
+import React, { useState, useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
+import { LeanCloudError } from '../services/authService';
+import { useNavigate } from 'react-router-dom';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
+  const { register } = useContext(AuthContext); // 使用 AuthContext
+  // const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
     try {
       await register(email, password);
       setMessage('Registration successful. Please check your email for verification.');
+      // 可选择导航到登录页面
+      // navigate('/login');
     } catch (error) {
       const leanCloudError = error as LeanCloudError;
       setMessage(leanCloudError.error || 'Registration failed');

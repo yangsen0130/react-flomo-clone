@@ -1,4 +1,4 @@
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const APP_ID = process.env.REACT_APP_APP_ID;
@@ -22,11 +22,17 @@ export interface LeanCloudError {
   error: string;
 }
 
-export const register = async (email: string, password: string) => {
+export interface User {
+  objectId: string;
+  email: string;
+  emailVerified: boolean;
+  // 根据需要添加更多字段
+}
+
+export const register = async (email: string, password: string): Promise<void> => {
   try {
-    const response = await api.post('/1.1/users', { email, password, username: email });
+    await api.post('/1.1/users', { email, password, username: email });
     await api.post('/1.1/requestEmailVerify', { email });
-    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const leanCloudError = error.response?.data as LeanCloudError;
@@ -36,7 +42,7 @@ export const register = async (email: string, password: string) => {
   }
 };
 
-export const login = async (email: string, password: string) => {
+export const login = async (email: string, password: string): Promise<User> => {
   try {
     const response = await api.post('/1.1/login', { email, password });
     if (!response.data.emailVerified) {
@@ -44,7 +50,12 @@ export const login = async (email: string, password: string) => {
     }
     localStorage.setItem('sessionToken', response.data.sessionToken);
     localStorage.setItem('userData', JSON.stringify(response.data)); // 存储用户数据
-    return response.data;
+    return {
+      objectId: response.data.objectId,
+      email: response.data.email,
+      emailVerified: response.data.emailVerified,
+      // 添加更多字段
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const leanCloudError = error.response?.data as LeanCloudError;
@@ -54,7 +65,7 @@ export const login = async (email: string, password: string) => {
   }
 };
 
-export const getCurrentUser = async () => {
+export const getCurrentUser = async (): Promise<User> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
     throw { error: 'No session token found' } as LeanCloudError;
@@ -63,7 +74,12 @@ export const getCurrentUser = async () => {
     const response = await api.get('/1.1/users/me', {
       headers: { 'X-LC-Session': sessionToken },
     });
-    return response.data;
+    return {
+      objectId: response.data.objectId,
+      email: response.data.email,
+      emailVerified: response.data.emailVerified,
+      // 添加更多字段
+    };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const leanCloudError = error.response?.data as LeanCloudError;

@@ -1,16 +1,18 @@
-
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { login, LeanCloudError } from '../services/authService';
+import { AuthContext } from '../contexts/AuthContext';
+import { LeanCloudError } from '../services/authService';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
+  const { login } = useContext(AuthContext); // 使用 AuthContext
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setMessage('');
     try {
       await login(email, password);
       navigate('/dashboard');

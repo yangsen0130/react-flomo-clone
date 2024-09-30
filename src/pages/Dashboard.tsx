@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getCurrentUser, logout } from '../services/authService';
+import { AuthContext } from '../contexts/AuthContext';
 import {
   getUserBlogs,
   Blog,
@@ -15,7 +15,7 @@ import {
 } from '../services/blogService';
 
 const Dashboard: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -29,25 +29,21 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const fetchUserAndBlogs = async () => {
+      if (!user) {
+        navigate('/login');
+        return;
+      }
       try {
-        const userData = await getCurrentUser();
-        setUser(userData);
-        localStorage.setItem('userData', JSON.stringify(userData)); // Store user data for helper function
-        const userBlogs = await getUserBlogs(userData.objectId);
+        const userBlogs = await getUserBlogs(user.objectId);
         setBlogs(userBlogs);
         const tags = await getAllTags();
         setAllTags(tags);
       } catch (error) {
-        navigate('/login');
+        console.error('Failed to fetch blogs or tags:', error);
       }
     };
     fetchUserAndBlogs();
-  }, [navigate]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  }, [user, navigate]);
 
   const handleCreateBlog = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,13 +98,12 @@ const Dashboard: React.FC = () => {
   };
 
   const handleTagsUpdated = async () => {
-    // Refresh blogs with tags
     if (!user) return;
     try {
       const userBlogs = await getUserBlogs(user.objectId);
       setBlogs(userBlogs);
     } catch (error) {
-      console.error(error);
+      console.error('Failed to refresh blogs:', error);
     }
   };
 
@@ -116,19 +111,6 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="mt-8">
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold">Welcome, {user.email}</h2>
-          <p className="text-gray-600">Email verified: {user.emailVerified ? 'Yes' : 'No'}</p>
-        </div>
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition"
-        >
-          Logout
-        </button>
-      </div>
-
       {/* Create Blog Form */}
       <div className="mb-8 p-6 bg-white rounded-lg shadow-md">
         <h3 className="text-xl font-semibold mb-4">Create a New Blog</h3>
