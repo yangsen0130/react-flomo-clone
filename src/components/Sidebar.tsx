@@ -21,19 +21,18 @@ const Sidebar: React.FC = () => {
       </button>
 
       <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-100 p-6 transition-transform transform ${
+        className={`fixed top-0 left-0 h-screen w-64 bg-gray-100 p-6 transition-transform transform ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } md:translate-x-0 md:static md:flex-shrink-0`}
       >
         {/* User Information at the Top */}
         {user && (
           <div className="mb-6 p-4 bg-blue-200 rounded-md">
-            <p className="font-semibold">Logged in as:</p>
+            {/* <p className="font-semibold">Logged in as:</p> */}
             <p>{user.email}</p>
-          </div>
+          </div>   
         )}
 
-        <h2 className="text-2xl font-semibold mb-6">Dashboard Menu</h2>
         <nav className="space-y-4">
           <NavLink
             to="/dashboard"

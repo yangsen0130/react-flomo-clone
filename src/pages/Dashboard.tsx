@@ -106,21 +106,20 @@ const Dashboard: React.FC = () => {
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
   return (
-    <div className="mt-8">
-      {/* Create Blog Form Component */}
-      <CreateBlogForm onCreate={handleCreateBlog} />
+    <div className="h-full flex flex-col">
+      <div className="flex-shrink-0 mb-4">
+        <CreateBlogForm onCreate={handleCreateBlog} />
+      </div>
 
-      {message && <p className="text-center text-green-500 mb-4">{message}</p>}
+      {message && <p className="text-center text-green-500 mb-4 flex-shrink-0">{message}</p>}
 
-      {/* Blog List */}
-      <div>
-        {/* <h3 className="text-xl font-semibold mb-4">Your Blogs</h3> */}
+      <div className="flex-grow overflow-y-auto">
         {blogs.length === 0 ? (
           <p className="text-center">You haven't created any blogs yet.</p>
         ) : (
-          <ul className="space-y-4">
+          <div className="space-y-4 pr-4">
             {blogs.map((blog) => (
-              <li key={blog.objectId} className="p-4 bg-white rounded-lg shadow-md">
+                <div key={blog.objectId} className="p-4 bg-white rounded shadow">
                 {editingBlogId === blog.objectId ? (
                   <div>
                     <input
@@ -138,7 +137,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div>
-                    <h4 className="text-lg font-semibold">{blog.title}</h4>
+                    <h3 className="text-xl font-semibold mb-2">{blog.title}</h3>
                     <p className="text-gray-700">
                       {blog.content ? `${blog.content.substring(0, 100)}...` : 'No content available'}
                     </p>
@@ -147,7 +146,6 @@ const Dashboard: React.FC = () => {
                 <small className="text-gray-500">
                   Created at: {new Date(blog.createdAt).toLocaleString()}
                 </small>
-                {/* Display tags */}
                 <div className="mt-2">
                   <strong>Tags:</strong>{' '}
                   {blog.tags && blog.tags.length > 0 ? (
@@ -168,7 +166,7 @@ const Dashboard: React.FC = () => {
                     <>
                       <button
                         onClick={() => handleEditSave(blog.objectId)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                        className="bg-white text-blue-500 px-3 py-1 rounded-md hover:bg-blue-600 transition"
                       >
                         Save
                       </button>
@@ -183,32 +181,31 @@ const Dashboard: React.FC = () => {
                     <>
                       <button
                         onClick={() => handleEditInitiate(blog)}
-                        className="bg-blue-500 text-white px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                        className="bg-white text-blue-500 px-3 py-1 rounded-md hover:bg-blue-600 transition"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteBlog(blog.objectId)}
-                        className="bg-red-500 text-white px-3 py-1 rounded-md hover:bg-red-600 transition"
+                        className="bg-white text-red-500 px-3 py-1 rounded-md hover:bg-red-600 transition"
                       >
                         Delete
                       </button>
                       <button
                         onClick={() => handleManageTags(blog)}
-                        className="bg-green-500 text-white px-3 py-1 rounded-md hover:bg-green-600 transition"
+                        className="bg-white text-green-500 px-3 py-1 rounded-md hover:bg-green-600 transition"
                       >
-                        Manage Tags
+                        Tags
                       </button>
                     </>
                   )}
                 </div>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </div>
 
-      {/* Manage Tags Modal */}
       {tagManagementBlogId && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">

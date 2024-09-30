@@ -61,9 +61,9 @@ const PublicLayout: React.FC = () => (
 // Dashboard Layout Component with Sidebar
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="flex">
+    <div className="flex mx-4">
       <Sidebar />
-      <main className="flex-grow container mx-auto p-4">
+      <main className="flex-grow container mx-auto h-screen overflow-hidden">
         {children}
       </main>
     </div>
