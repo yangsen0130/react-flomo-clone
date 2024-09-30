@@ -137,9 +137,8 @@ const Dashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">{blog.title}</h3>
                     <p className="text-gray-700">
-                      {blog.content ? `${blog.content.substring(0, 100)}...` : 'No content available'}
+                      {blog.content ? blog.content : 'No content available'}
                     </p>
                   </div>
                 )}
