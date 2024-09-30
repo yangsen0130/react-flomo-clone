@@ -1,3 +1,4 @@
+
 // ./src/pages/Dashboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
@@ -16,7 +17,6 @@ import {
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlogForm';
 import ManageTags from '../components/ManageTags'; // Assuming you have this component
-// Sidebar is now part of DashboardLayout
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -49,7 +49,7 @@ const Dashboard: React.FC = () => {
 
   const handleEditInitiate = (blog: Blog) => {
     setEditingBlogId(blog.objectId);
-    setEditTitle(blog.title);
+    setEditTitle(blog.title || '');
     setEditContent(blog.content);
   };
 
@@ -119,29 +119,19 @@ const Dashboard: React.FC = () => {
         ) : (
           <div className="space-y-4 pr-4">
             {blogs.map((blog) => (
-                <div key={blog.objectId} className="p-4 bg-white rounded shadow">
-                {editingBlogId === blog.objectId ? (
-                  <div>
-                    <input
-                      type="text"
-                      value={editTitle}
-                      onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <textarea
-                      value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full px-4 py-2 border rounded-md mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      rows={4}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-gray-700">
-                      {blog.content ? blog.content : 'No content available'}
-                    </p>
-                  </div>
-                )}
+              <div key={blog.objectId} className="p-4 bg-white rounded shadow">
+                <div
+                  contentEditable={editingBlogId === blog.objectId}
+                  suppressContentEditableWarning={true}
+                  className="text-gray-700"
+                  onInput={
+                    editingBlogId === blog.objectId
+                      ? (e) => setEditContent(e.currentTarget.textContent || '')
+                      : undefined
+                  }
+                >
+                  {editingBlogId === blog.objectId ? editContent : blog.content}
+                </div>
                 <small className="text-gray-500">
                   Created at: {new Date(blog.createdAt).toLocaleString()}
                 </small>
@@ -161,7 +151,25 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
                 <div className="mt-2 flex space-x-2">
-                  {editingBlogId === blog.objectId ? (
+                  <button
+                    onClick={() => handleEditInitiate(blog)}
+                    className="bg-white text-blue-500 px-3 py-1 rounded-md hover:bg-blue-600 transition"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBlog(blog.objectId)}
+                    className="bg-white text-red-500 px-3 py-1 rounded-md hover:bg-red-600 transition"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => handleManageTags(blog)}
+                    className="bg-white text-green-500 px-3 py-1 rounded-md hover:bg-green-600 transition"
+                  >
+                    Tags
+                  </button>
+                  {editingBlogId === blog.objectId && (
                     <>
                       <button
                         onClick={() => handleEditSave(blog.objectId)}
@@ -174,27 +182,6 @@ const Dashboard: React.FC = () => {
                         className="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600 transition"
                       >
                         Cancel
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => handleEditInitiate(blog)}
-                        className="bg-white text-blue-500 px-3 py-1 rounded-md hover:bg-blue-600 transition"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteBlog(blog.objectId)}
-                        className="bg-white text-red-500 px-3 py-1 rounded-md hover:bg-red-600 transition"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => handleManageTags(blog)}
-                        className="bg-white text-green-500 px-3 py-1 rounded-md hover:bg-green-600 transition"
-                      >
-                        Tags
                       </button>
                     </>
                   )}
