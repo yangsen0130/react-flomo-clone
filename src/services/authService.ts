@@ -43,6 +43,7 @@ export const login = async (email: string, password: string) => {
       throw { error: 'Please verify your email before logging in.' } as LeanCloudError;
     }
     localStorage.setItem('sessionToken', response.data.sessionToken);
+    localStorage.setItem('userData', JSON.stringify(response.data)); // 存储用户数据
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -74,5 +75,15 @@ export const getCurrentUser = async () => {
 
 export const logout = () => {
   localStorage.removeItem('sessionToken');
+  localStorage.removeItem('userData'); // 移除用户数据
 };
 
+// 新增: 获取当前用户ID
+export const getCurrentUserId = (): string => {
+  const userData = localStorage.getItem('userData');
+  if (!userData) {
+    throw { error: 'No user data found' } as LeanCloudError;
+  }
+  const user = JSON.parse(userData);
+  return user.objectId;
+};
