@@ -3,10 +3,12 @@ import React, { useState, useContext } from 'react';
 import { NavLink } from 'react-router-dom';
 import { FaHome, FaBlog, FaUser, FaCog, FaBars, FaTimes } from 'react-icons/fa';
 import { AuthContext } from '../contexts/AuthContext';
+import { TagsContext } from '../contexts/TagsContext';
 
 const Sidebar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { user } = useContext(AuthContext); // Access user from context
+  const { user } = useContext(AuthContext);
+  const { tags } = useContext(TagsContext);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -28,9 +30,8 @@ const Sidebar: React.FC = () => {
         {/* User Information at the Top */}
         {user && (
           <div className="mb-6 p-4 bg-blue-200 rounded-md">
-            {/* <p className="font-semibold">Logged in as:</p> */}
             <p>{user.email}</p>
-          </div>   
+          </div>
         )}
 
         <nav className="space-y-4">
@@ -83,6 +84,18 @@ const Sidebar: React.FC = () => {
             Settings
           </NavLink>
         </nav>
+
+        {/* Display all tags */}
+        <div className="mt-6">
+          <h2 className="text-lg font-semibold mb-2">Tags</h2>
+          <div className="space-y-1">
+            {tags.map((tag) => (
+              <div key={tag.objectId}>
+                <span className="text-gray-700">#{tag.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </aside>
     </>
   );
