@@ -332,3 +332,58 @@ export const deleteBlog = async (blogId: string): Promise<void> => {
     throw error;
   }
 };
+
+export const getBlogCountsByDate = async (
+  userId: string,
+  days: number = 84
+): Promise<{ [date: string]: number }> => {
+  const sessionToken = localStorage.getItem('sessionToken');
+  if (!sessionToken) {
+    throw { error: 'No session token found' } as LeanCloudError;
+  }
+
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - (days - 1)); // start from days ago
+
+  try {
+    // Fetch all blogs created by the user in the last 'days' days
+    const response = await api.get('/1.1/classes/Blog', {
+      headers: { 'X-LC-Session': sessionToken },
+      params: {
+        where: JSON.stringify({
+          author: { __type: 'Pointer', className: '_User', objectId: userId },
+          createdAt: { '$gte': { '__type': 'Date', 'iso': startDate.toISOString() } },
+        }),
+        order: 'createdAt', // ascending order
+        limit: 1000, // Adjust as needed
+      },
+    });
+
+    const blogs = response.data.results;
+
+    // Initialize counts for each day in the range
+    const counts: { [date: string]: number } = {};
+    for (let i = 0; i < days; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      const dateString = date.toISOString().slice(0, 10); // yyyy-mm-dd
+      counts[dateString] = 0;
+    }
+
+    // Count blogs per day
+    for (const blog of blogs) {
+      const dateString = new Date(blog.createdAt).toISOString().slice(0, 10);
+      if (counts[dateString] !== undefined) {
+        counts[dateString]++;
+      }
+    }
+
+    return counts;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const leanCloudError = error.response?.data as LeanCloudError;
+      throw leanCloudError;
+    }
+    throw error;
+  }
+};
