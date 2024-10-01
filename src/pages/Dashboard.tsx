@@ -16,7 +16,6 @@ import {
   removeTagFromBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlogForm';
-import ManageTags from '../components/ManageTags'; // Assuming you have this component
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -26,7 +25,6 @@ const Dashboard: React.FC = () => {
   const [editContent, setEditContent] = useState('');
   const [message, setMessage] = useState<string>('');
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [tagManagementBlogId, setTagManagementBlogId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,20 +80,6 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       const leanCloudError = error as { error: string };
       setMessage(leanCloudError.error || 'Failed to delete blog.');
-    }
-  };
-
-  const handleManageTags = (blog: Blog) => {
-    setTagManagementBlogId(blog.objectId);
-  };
-
-  const handleTagsUpdated = async () => {
-    if (!user) return;
-    try {
-      const userBlogs = await getUserBlogs(user.objectId);
-      setBlogs(userBlogs);
-    } catch (error) {
-      console.error('Failed to refresh blogs:', error);
     }
   };
 
@@ -163,12 +147,7 @@ const Dashboard: React.FC = () => {
                   >
                     Delete
                   </button>
-                  <button
-                    onClick={() => handleManageTags(blog)}
-                    className="bg-white text-green-500 px-3 py-1 rounded-md hover:bg-green-600 transition"
-                  >
-                    Tags
-                  </button>
+                  
                   {editingBlogId === blog.objectId && (
                     <>
                       <button
@@ -192,20 +171,6 @@ const Dashboard: React.FC = () => {
         )}
       </div>
 
-      {tagManagementBlogId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-            <h3 className="text-xl font-semibold mb-4">Manage Tags</h3>
-            <ManageTags
-              blogId={tagManagementBlogId}
-              allTags={allTags}
-              blogTags={blogs.find((blog) => blog.objectId === tagManagementBlogId)?.tags || []}
-              onClose={() => setTagManagementBlogId(null)}
-              onTagsUpdated={handleTagsUpdated}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 };
