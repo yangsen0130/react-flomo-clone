@@ -1,4 +1,3 @@
-
 // ./src/pages/Dashboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
@@ -16,6 +15,7 @@ import {
   removeTagFromBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlogForm';
+import { message } from 'antd';
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -23,9 +23,10 @@ const Dashboard: React.FC = () => {
   const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
-  const [message, setMessage] = useState<string>('');
   const [allTags, setAllTags] = useState<Tag[]>([]);
   const navigate = useNavigate();
+
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     const fetchUserAndBlogs = async () => {
@@ -40,10 +41,11 @@ const Dashboard: React.FC = () => {
         setAllTags(tags);
       } catch (error) {
         console.error('Failed to fetch blogs or tags:', error);
+        messageApi.error('Failed to fetch blogs or tags.');
       }
     };
     fetchUserAndBlogs();
-  }, [user, navigate]);
+  }, [user, navigate, messageApi]);
 
   const handleEditInitiate = (blog: Blog) => {
     setEditingBlogId(blog.objectId);
@@ -64,10 +66,10 @@ const Dashboard: React.FC = () => {
       setEditingBlogId(null);
       setEditTitle('');
       setEditContent('');
-      setMessage('Blog updated successfully.');
+      messageApi.success('Blog updated successfully.');
     } catch (error) {
       const leanCloudError = error as { error: string };
-      setMessage(leanCloudError.error || 'Failed to update blog.');
+      messageApi.error(leanCloudError.error || 'Failed to update blog.');
     }
   };
 
@@ -76,26 +78,26 @@ const Dashboard: React.FC = () => {
     try {
       await deleteBlog(blogId);
       setBlogs(blogs.filter((blog) => blog.objectId !== blogId));
-      setMessage('Blog deleted successfully.');
+      messageApi.success('Blog deleted successfully.');
     } catch (error) {
       const leanCloudError = error as { error: string };
-      setMessage(leanCloudError.error || 'Failed to delete blog.');
+      messageApi.error(leanCloudError.error || 'Failed to delete blog.');
     }
   };
 
   const handleCreateBlog = (newBlog: Blog) => {
     setBlogs([newBlog, ...blogs]);
+    messageApi.success('Blog created successfully.');
   };
 
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
   return (
     <div className="h-full flex flex-col">
+      {contextHolder}
       <div className="flex-shrink-0 mb-4">
         <CreateBlogForm onCreate={handleCreateBlog} />
       </div>
-
-      {message && <p className="text-center text-green-500 mb-4 flex-shrink-0">{message}</p>}
 
       <div className="flex-grow overflow-y-auto">
         {blogs.length === 0 ? (
@@ -147,7 +149,7 @@ const Dashboard: React.FC = () => {
                   >
                     Delete
                   </button>
-                  
+
                   {editingBlogId === blog.objectId && (
                     <>
                       <button
@@ -170,7 +172,6 @@ const Dashboard: React.FC = () => {
           </div>
         )}
       </div>
-
     </div>
   );
 };

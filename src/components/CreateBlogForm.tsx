@@ -4,6 +4,7 @@ import { AuthContext } from '../contexts/AuthContext';
 import { TagsContext } from '../contexts/TagsContext';
 import { createBlog, Blog, createTag, addTagToBlog, Tag } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
+import { message } from 'antd';
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
@@ -11,13 +12,14 @@ interface CreateBlogFormProps {
 
 const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   const [content, setContent] = useState('');
-  const [message, setMessage] = useState('');
+  // const [message, setMessage] = useState('');
   const { user } = useContext(AuthContext);
   const { tags, refreshTags } = useContext(TagsContext);
   const [showTagSuggestions, setShowTagSuggestions] = useState(false);
   const [tagSearchTerm, setTagSearchTerm] = useState('');
   const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
   const contentEditableRef = useRef<HTMLDivElement>(null);
+  const [messageApi, contextHolder] = message.useMessage();
 
   useEffect(() => {
     setFilteredTags(tags);
@@ -96,9 +98,9 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMessage('');
+    messageApi.info('');
     if (!user) {
-      setMessage('You must be logged in to create a blog.');
+      messageApi.info('You must be logged in to create a blog.');
       return;
     }
     try {
@@ -130,10 +132,10 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
       if (contentEditableRef.current) {
         contentEditableRef.current.innerHTML = '';
       }
-      setMessage('Blog created successfully.');
+      messageApi.info('Blog created successfully.');
     } catch (error) {
       const leanCloudError = error as LeanCloudError;
-      setMessage(leanCloudError.error || 'Failed to create blog.');
+      messageApi.info(leanCloudError.error || 'Failed to create blog.');
     }
   };
 
@@ -177,7 +179,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
           Create Blog
         </button>
       </form>
-      {message && <p className="mt-4 text-center text-red-500">{message}</p>}
+      {/* {message && <p className="mt-4 text-center text-red-500">{message}</p>} */}
     </div>
   );
 };
