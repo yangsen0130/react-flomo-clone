@@ -1,3 +1,4 @@
+// ./src/services/blogService.ts
 import axios from 'axios';
 import { LeanCloudError, getCurrentUserId } from './authService';
 
@@ -25,7 +26,6 @@ export interface Tag {
 
 export interface Blog {
   objectId: string;
-  title: string;
   content: string;
   createdAt: string;
   tags?: Tag[];
@@ -55,7 +55,7 @@ export const getUserBlogs = async (userId: string): Promise<Blog[]> => {
       blog.tags = tags;
     }
 
-    // Verify content field
+    // Ensure content field exists
     if (blogs) {
       blogs.forEach((blog: any) => {
         if (typeof blog.content !== 'string') {
@@ -252,7 +252,7 @@ export const getAllTags = async (): Promise<Tag[]> => {
   }
 };
 
-export const createBlog = async (title: string, content: string): Promise<Blog> => {
+export const createBlog = async (content: string): Promise<Blog> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
     throw { error: 'No session token found' } as LeanCloudError;
@@ -262,7 +262,6 @@ export const createBlog = async (title: string, content: string): Promise<Blog> 
     const response = await api.post(
       '/1.1/classes/Blog',
       {
-        title,
         content,
         author: {
           __type: 'Pointer',
@@ -275,7 +274,6 @@ export const createBlog = async (title: string, content: string): Promise<Blog> 
       }
     );
     response.data.content = content;
-    response.data.title = title;
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -288,7 +286,6 @@ export const createBlog = async (title: string, content: string): Promise<Blog> 
 
 export const updateBlog = async (
   blogId: string,
-  title: string,
   content: string
 ): Promise<Blog> => {
   const sessionToken = localStorage.getItem('sessionToken');
@@ -300,7 +297,6 @@ export const updateBlog = async (
     const response = await api.put(
       `/1.1/classes/Blog/${blogId}`,
       {
-        title,
         content,
       },
       {
@@ -308,7 +304,6 @@ export const updateBlog = async (
       }
     );
     response.data.content = content;
-    response.data.title = title;
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
