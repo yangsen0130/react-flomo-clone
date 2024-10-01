@@ -1,4 +1,3 @@
-// ./src/pages/Dashboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate, Routes, Route } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
@@ -17,11 +16,10 @@ import {
 import CreateBlogForm from '../components/CreateBlogForm';
 import { HomeOutlined, UserOutlined } from '@ant-design/icons';
 
-import { message,  } from 'antd';
+import { message, } from 'antd';
 import { Breadcrumb } from "antd";
 import type { GetProps } from 'antd';
 import { Input, Space } from 'antd';
-
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -103,26 +101,31 @@ const Dashboard: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {contextHolder}
-      <Breadcrumb
-        items={[
-          {
-            href: '',
-            title: <HomeOutlined />,
-          },
-          {
-            href: '',
-            title: (
-              <>
-                <UserOutlined />
-                <span>Application List</span>
-              </>
-            ),
-          },
-        ]}
-      />
-        <Search placeholder="input search text" style={{ width: 200 }} />
+      
 
       <div className="flex-shrink-0 mb-4">
+
+        <div className="flex justify-between items-center mx-4">
+          <Breadcrumb
+            items={[
+              {
+                href: '',
+                title: <HomeOutlined />,
+              },
+              {
+                href: '',
+                title: (
+                  <>
+                    <UserOutlined />
+                    <span>Application List</span>
+                  </>
+                ),
+              },
+            ]}
+          />
+          <Search placeholder="input search text" style={{ width: 200 }} />
+        </div>
+        
         <CreateBlogForm onCreate={handleCreateBlog} />
       </div>
 

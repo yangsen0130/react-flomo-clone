@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProseMirror Editor with Blue Hashtags</title>
+    <style>
+        .ProseMirror {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 100px;
+        }
+        .blue-hashtag {
+            color: blue;
+        }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+
+    <script src="https://prosemirror.net/examples/prosemirror.js"></script>
+    <script src="https://prosemirror.net/examples/setup.js"></script>
+    <script>
+        (function() {
+            const {Schema} = prosemirror.model
+            const {EditorState, TextSelection} = prosemirror.state
+            const {EditorView} = prosemirror.view
+            const {exampleSetup} = prosemirror.example_setup
+            const {schema} = prosemirror.schema_basic
+
+            // Extend the basic schema to include a blue-hashtag mark
+            const mySchema = new Schema({
+                nodes: schema.spec.nodes,
+                marks: schema.spec.marks.addToEnd('blue-hashtag', {
+                    parseDOM: [{tag: 'span.blue-hashtag'}],
+                    toDOM() { return ['span', {class: 'blue-hashtag'}] }
+                })
+            })
+
+            // Custom plugin to handle blue hashtags
+            const blueHashtagPlugin = new prosemirror.state.Plugin({
+                appendTransaction(transactions, oldState, newState) {
+                    const tr = newState.tr
+                    let modified = false
+
+                    newState.doc.descendants((node, pos) => {
+                        if (node.isText) {
+                            const text = node.text
+                            let match
+                            const regex = /#\w+/g
+                            while ((match = regex.exec(text)) !== null) {
+                                const start = pos + match.index
+                                const end = start + match[0].length
+                                if (!newState.doc.rangeHasMark(start, end, mySchema.marks.blue_hashtag)) {
+                                    tr.addMark(start, end, mySchema.marks.blue_hashtag.create())
+                                    modified = true
+                                }
+                            }
+                        }
+                    })
+
+                    return modified ? tr : null
+                }
+            })
+
+            window.view = new EditorView(document.querySelector("#editor"), {
+                state: EditorState.create({
+                    schema: mySchema,
+                    plugins: [
+                        ...exampleSetup({schema: mySchema}),
+                        blueHashtagPlugin
+                    ]
+                })
+            })
+        })()
+    </script>
+</body>
+</html>
