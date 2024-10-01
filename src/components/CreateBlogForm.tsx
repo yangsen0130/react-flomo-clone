@@ -5,6 +5,7 @@ import { TagsContext } from '../contexts/TagsContext';
 import { createBlog, Blog, createTag, addTagToBlog, Tag } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
 import { message } from 'antd';
+import { useEditor, EditorContent } from '@tiptap/react'
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
@@ -138,10 +139,11 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
       messageApi.info(leanCloudError.error || 'Failed to create blog.');
     }
   };
-
+  
   return (
+    
     <div className="mb-8 p-6 bg-white rounded-lg shadow-md mr-4">
-      <h3 className="text-xl font-semibold mb-4">Create a New Blog</h3>
+      {/* <h3 className="text-xl font-semibold mb-4">Create a New Blog</h3> */}
       <form onSubmit={handleSubmit} className="relative">
         <div
           ref={contentEditableRef}

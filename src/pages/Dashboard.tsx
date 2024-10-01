@@ -15,7 +15,13 @@ import {
   removeTagFromBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlogForm';
-import { message } from 'antd';
+import { HomeOutlined, UserOutlined } from '@ant-design/icons';
+
+import { message,  } from 'antd';
+import { Breadcrumb } from "antd";
+import type { GetProps } from 'antd';
+import { Input, Space } from 'antd';
+
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
@@ -27,6 +33,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
 
   const [messageApi, contextHolder] = message.useMessage();
+  type SearchProps = GetProps<typeof Input.Search>;
+  const { Search } = Input;
 
   useEffect(() => {
     const fetchUserAndBlogs = async () => {
@@ -95,6 +103,25 @@ const Dashboard: React.FC = () => {
   return (
     <div className="h-full flex flex-col">
       {contextHolder}
+      <Breadcrumb
+        items={[
+          {
+            href: '',
+            title: <HomeOutlined />,
+          },
+          {
+            href: '',
+            title: (
+              <>
+                <UserOutlined />
+                <span>Application List</span>
+              </>
+            ),
+          },
+        ]}
+      />
+        <Search placeholder="input search text" style={{ width: 200 }} />
+
       <div className="flex-shrink-0 mb-4">
         <CreateBlogForm onCreate={handleCreateBlog} />
       </div>
