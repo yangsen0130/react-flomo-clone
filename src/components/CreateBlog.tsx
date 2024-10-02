@@ -1,3 +1,5 @@
+import './tiptap.scss'
+
 import React, { useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { createBlog, Blog } from '../services/blogService';
@@ -5,15 +7,23 @@ import { LeanCloudError } from '../services/authService';
 import { message } from 'antd';
 import { EditorContent, useEditor } from '@tiptap/react';
 import Document from '@tiptap/extension-document';
-import Mention from '@tiptap/extension-mention';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
+import Mention from '@tiptap/extension-mention';
+import Bold from '@tiptap/extension-bold';
+import BulletList from '@tiptap/extension-bullet-list';
+import OrderedList from '@tiptap/extension-ordered-list';
+import ListItem from '@tiptap/extension-list-item';
+import Highlight from '@tiptap/extension-highlight';
+import Underline from '@tiptap/extension-underline';
 import { TagsContext } from '../contexts/TagsContext';
 import { ReactRenderer } from '@tiptap/react';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionProps } from '@tiptap/suggestion';
 import MentionList from './MentionList';
 import { Tag } from '../services/blogService';
+import Typography from '@tiptap/extension-typography'
+import StarterKit from '@tiptap/starter-kit'
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
@@ -39,6 +49,8 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   }, [tags]);
 
   const suggestion = {
+
+    char: "#",
     items: ({ query }: { query: string }): string[] => {
       // Access tags from the ref
       const availableTags = tagsRef.current;
@@ -46,8 +58,8 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
       return availableTags
         .map((tag) => tag.name)
-        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
-        // .slice(0, 5);
+        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()))
+        .slice(0, 5);
     },
 
     render: (): SuggestionResult => {
@@ -107,9 +119,17 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
   const editor = useEditor({
     extensions: [
-      Document,
-      Paragraph,
-      Text,
+      // Document,
+      // Paragraph,
+      // Text,
+      Bold,
+      Underline,
+      StarterKit,
+      Highlight,
+      Typography,
+      BulletList,
+      OrderedList,
+      ListItem,
       Mention.configure({
         HTMLAttributes: {
           class: 'mention',
