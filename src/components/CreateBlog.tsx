@@ -1,8 +1,6 @@
-// ./src/components/CreateBlogForm.tsx
 import React, { useState, useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
-import { TagsContext } from '../contexts/TagsContext';
-import { createBlog, Blog, createTag, addTagToBlog, Tag } from '../services/blogService';
+import { createBlog, Blog } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
 import { message } from 'antd';
 
@@ -13,167 +11,223 @@ interface CreateBlogFormProps {
 const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   const [content, setContent] = useState('');
   const { user } = useContext(AuthContext);
-  const { tags, refreshTags } = useContext(TagsContext);
-  const [showTagSuggestions, setShowTagSuggestions] = useState(false);
-  const [tagSearchTerm, setTagSearchTerm] = useState('');
-  const [filteredTags, setFilteredTags] = useState<Tag[]>([]);
+
   const contentEditableRef = useRef<HTMLDivElement>(null);
   const [messageApi, contextHolder] = message.useMessage();
+  const [showHashtagMenu, setShowHashtagMenu] = useState(false);
+  const [hashtagMenuPosition, setHashtagMenuPosition] = useState({ top: 0, left: 0 });
+  const [hashtagRange, setHashtagRange] = useState<Range | null>(null);
 
-  useEffect(() => {
-    setFilteredTags(tags);
-  }, [tags]);
+  // Helper function to determine if a character is visible (non-whitespace)
+  const isVisibleCharacter = (char: string) => {
+    return /\S/.test(char);
+  };
 
+  // Handler for content changes in the editable div
   const handleContentChange = (e: React.FormEvent<HTMLDivElement>) => {
     const textContent = e.currentTarget.textContent || '';
     setContent(textContent);
   };
 
+  // Handler for key presses in the editable div
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === '#') {
-      setShowTagSuggestions(true);
-      setTagSearchTerm('');
-      setFilteredTags(tags);
-    } else if (showTagSuggestions) {
-      if (e.key === 'Backspace') {
-        setTagSearchTerm((prev) => prev.slice(0, -1));
-        setFilteredTags(
-          tags.filter((tag) => tag.name.toLowerCase().includes(tagSearchTerm.toLowerCase()))
-        );
-      } else if (e.key.length === 1) {
-        setTagSearchTerm((prev) => prev + e.key);
-        setFilteredTags(
-          tags.filter((tag) => tag.name.toLowerCase().includes(tagSearchTerm.toLowerCase()))
-        );
-      } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        // Handle navigation in suggestions if needed
-      } else if (e.key === 'Enter') {
-        e.preventDefault();
-        // Handle select tag
-        if (filteredTags.length > 0) {
-          insertTag(filteredTags[0].name);
+      e.preventDefault();
+
+      const selection = window.getSelection();
+
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const { startContainer, startOffset } = range;
+
+        let charBefore = '';
+
+        // Check character before the cursor within the same text node
+        if (startOffset > 0 && startContainer.textContent) {
+          charBefore = startContainer.textContent[startOffset - 1];
+        } 
+        // If at the start of a text node, check the previous sibling node
+        else if (startOffset === 0 && startContainer.previousSibling) {
+          const prevSibling = startContainer.previousSibling;
+          if (prevSibling && prevSibling.textContent) {
+            charBefore = prevSibling.textContent.slice(-1);
+          }
         } else {
-          insertTag(tagSearchTerm);
+          charBefore = ''; // At the start of content, assume charBefore is empty (whitespace)
         }
-      } else if (e.key === 'Escape') {
-        setShowTagSuggestions(false);
+
+        if (!isVisibleCharacter(charBefore)) {
+          // Insert '#' character
+          const textNode = document.createTextNode('#');
+          range.insertNode(textNode);
+
+          // Move the selection after the inserted '#'
+          range.setStartAfter(textNode);
+          range.collapse(true);
+
+          selection.removeAllRanges();
+          selection.addRange(range);
+
+          // Now, get the position of the inserted '#' character
+          const hashRange = document.createRange();
+          hashRange.selectNode(textNode);
+          const rect = hashRange.getBoundingClientRect();
+
+          const editorRect = contentEditableRef.current?.getBoundingClientRect();
+
+          if (rect && editorRect) {
+            const top = rect.bottom - editorRect.top + contentEditableRef.current!.scrollTop;
+            const left = rect.left - editorRect.left + contentEditableRef.current!.scrollLeft;
+
+            setHashtagMenuPosition({ top, left });
+            setShowHashtagMenu(true);
+
+            // Save the range of the '#' character
+            setHashtagRange(hashRange);
+          }
+
+          // Update content state
+          setContent(contentEditableRef.current?.textContent || '');
+        } else {
+          messageApi.info('Hashtag must be preceded by a whitespace character.');
+        }
       }
     }
   };
 
-  const insertTag = (tagName: string) => {
-    const contentEditable = contentEditableRef.current;
-    if (!contentEditable) return;
-    const selection = window.getSelection();
-    if (!selection || !selection.rangeCount) return;
+  // Handle selection of a hashtag from the menu
+  const handleHashtagSelect = (hashtag: string) => {
+    if (hashtagRange && contentEditableRef.current) {
+      // Replace the '#' character with selected hashtag
+      hashtagRange.deleteContents();
+      const hashtagNode = document.createTextNode(`#${hashtag} `);
+      hashtagRange.insertNode(hashtagNode);
 
-    const range = selection.getRangeAt(0);
-    // Remove the '#' and any typed characters
-    range.setStart(range.startContainer, range.startOffset - tagSearchTerm.length - 1);
-    range.deleteContents();
+      // Move the caret after the inserted hashtag
+      const selection = window.getSelection();
+      if (selection) {
+        const range = document.createRange();
+        range.setStartAfter(hashtagNode);
+        range.collapse(true);
 
-    const textNode = document.createTextNode(`#${tagName} `);
-    range.insertNode(textNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
 
-    // Move the cursor after the inserted tag
-    range.setStartAfter(textNode);
-    range.setEndAfter(textNode);
-    selection.removeAllRanges();
-    selection.addRange(range);
+      // Update content state
+      setContent(contentEditableRef.current?.textContent || '');
 
-    setShowTagSuggestions(false);
-    setTagSearchTerm('');
-    setFilteredTags(tags);
+      // Close the hashtag menu
+      setShowHashtagMenu(false);
 
-    // Update content
-    setContent(contentEditable.textContent || '');
+      setHashtagRange(null);
+    }
   };
 
-  const handleSuggestionClick = (tagName: string) => {
-    insertTag(tagName);
-    setShowTagSuggestions(false);
-  };
+  // Effect to close the hashtag menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        contentEditableRef.current &&
+        !contentEditableRef.current.contains(event.target as Node)
+      ) {
+        setShowHashtagMenu(false);
+      }
+    };
 
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handler for form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear any existing messages
     messageApi.info('');
+    
     if (!user) {
       messageApi.info('You must be logged in to create a blog.');
       return;
     }
-    try {
-      // Extract tags from content
-      const tagsInContent = Array.from(
-        new Set(
-          (content.match(/#(\w+)/g) || []).map((tag) => tag.substring(1))
-        )
-      );
 
+    try {
       // Create the blog
       const newBlog = await createBlog(content);
 
-      // For each tag, check if it exists, create if not, then associate with blog
-      for (const tagName of tagsInContent) {
-        let tag = tags.find((t) => t.name === tagName);
-        if (!tag) {
-          // Create new tag
-          tag = await createTag(tagName);
-          // Refresh tags in context
-          refreshTags();
-        }
-        // Associate tag with blog
-        await addTagToBlog(newBlog.objectId, tag.objectId);
-      }
-
+      // Invoke the callback with the new blog
       onCreate(newBlog);
+
+      // Reset the form
       setContent('');
       if (contentEditableRef.current) {
         contentEditableRef.current.innerHTML = '';
       }
-      messageApi.info('Blog created successfully.');
+
+      // Show success message
+      messageApi.success('Blog created successfully.');
     } catch (error) {
       const leanCloudError = error as LeanCloudError;
-      messageApi.info(leanCloudError.error || 'Failed to create blog.');
+      messageApi.error(leanCloudError.error || 'Failed to create blog.');
     }
   };
-  
+
   return (
     <div className="mb-8 p-6 bg-white rounded-lg shadow-md mr-4">
+      {contextHolder}
+      
       <form onSubmit={handleSubmit} className="relative">
         <div
           ref={contentEditableRef}
           contentEditable
           onInput={handleContentChange}
           onKeyDown={handleKeyDown}
-          className="w-full outline rounded-md focus:outline-none min-h-[100px]"
+          className="w-full outline rounded-md focus:outline-none min-h-[100px] relative"
         >
-            <p className="text-gray-400 m-0 p-2" data-placeholder>Type your text here...</p>
+          {/* {content === '' && (
+            <p className="text-gray-400 m-0 p-2" data-placeholder>
+              Type your text here...
+            </p>
+          )} */}
         </div>
-        {showTagSuggestions && (
-          <div className="absolute z-10 bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-y-auto">
-            {filteredTags.map((tag) => (
-              <div
-                key={tag.objectId}
-                className="px-4 py-2 hover:bg-blue-500 hover:text-white cursor-pointer"
-                onMouseDown={() => handleSuggestionClick(tag.name)}
+
+        {showHashtagMenu && (
+          <div
+            style={{
+              position: 'absolute',
+              top: `${hashtagMenuPosition.top}px`,
+              left: `${hashtagMenuPosition.left}px`,
+              zIndex: 1000,
+            }}
+            className="bg-white border border-gray-300 rounded shadow-md p-2"
+          >
+            <ul>
+              <li
+                className="cursor-pointer hover:bg-gray-100 p-1"
+                onClick={() => handleHashtagSelect('Option 1')}
               >
-                {tag.name}
-              </div>
-            ))}
-            {filteredTags.length === 0 && tagSearchTerm && (
-              <div
-                className="px-4 py-2 hover:bg-blue-500 hover:text-white cursor-pointer"
-                onMouseDown={() => insertTag(tagSearchTerm)}
+                Option 1
+              </li>
+              <li
+                className="cursor-pointer hover:bg-gray-100 p-1"
+                onClick={() => handleHashtagSelect('Option 2')}
               >
-                Create new tag "{tagSearchTerm}"
-              </div>
-            )}
+                Option 2
+              </li>
+              <li
+                className="cursor-pointer hover:bg-gray-100 p-1"
+                onClick={() => handleHashtagSelect('Option 3')}
+              >
+                Option 3
+              </li>
+            </ul>
           </div>
         )}
+
         <button
           type="submit"
-          className="w-full mt-2 bg-white text-blue-600 py-2 rounded-md hover:bg-gray-100 transition"
+          className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
         >
           Create Blog
         </button>

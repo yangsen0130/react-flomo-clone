@@ -12,7 +12,7 @@ import {
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlog';
 import { HomeOutlined, UserOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
-
+import Editor from '../components/editor/Editor'
 import { message, Tooltip, Button } from 'antd';
 import { Breadcrumb, Input } from 'antd';
 import BlogItem from '../components/BlogItem';
@@ -124,6 +124,7 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="flex-shrink-0 mb-4">
+            <Editor />
             <CreateBlogForm onCreate={handleCreateBlog} />
           </div>
 
