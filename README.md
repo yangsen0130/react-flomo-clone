@@ -1,16 +1,14 @@
 
 
 
-react login register demo of using leancloud as serveless backend, with email verification feature.
+react flomo
 
-
-![](./image.png)
 
 ### setup
 
 .env.local
 ```
-REACT_APP_API_BASE_URL=https://xxx.com
-REACT_APP_APP_ID=xxx
-REACT_APP_APP_KEY=xxx
+REACT_APP_API_BASE_URL=YOUR_API_BASE_URL
+REACT_APP_APP_ID=YOUR_APP_ID
+REACT_APP_APP_KEY=YOUR_API_APP_KEY
 ```

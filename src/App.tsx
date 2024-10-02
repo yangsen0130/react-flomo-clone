@@ -1,17 +1,15 @@
-// ./src/App.tsx
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import Header from './components/Header'; // Updated import path
+import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Home from './pages/Home'; // Assuming Home is in pages folder
+import Home from './pages/Home';
 import { AuthContext } from './contexts/AuthContext';
 
 const App: React.FC = () => {
   const { user } = useContext(AuthContext);
-
 
   return (
     <Router>
@@ -29,7 +27,9 @@ const App: React.FC = () => {
           element={
             user ? (
               <DashboardLayout>
-                <Dashboard />
+                <Dashboard isSidebarCollapsed={false} onExpandSidebar={function (): void {
+                  throw new Error('Function not implemented.');
+                } } />
               </DashboardLayout>
             ) : (
               <Navigate to="/login" replace />
@@ -60,11 +60,26 @@ const PublicLayout: React.FC = () => (
 
 // Dashboard Layout Component with Sidebar
 const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleCollapseSidebar = () => {
+    setIsSidebarCollapsed(true);
+  };
+
+  const handleExpandSidebar = () => {
+    setIsSidebarCollapsed(false);
+  };
+
   return (
-    <div className="flex  max-w-[960px] w-full mx-auto">
-      <Sidebar />
+    <div className="flex max-w-[960px] w-full mx-auto">
+      {!isSidebarCollapsed && (
+        <Sidebar isCollapsed={isSidebarCollapsed} onCollapse={handleCollapseSidebar} />
+      )}
       <main className="flex-grow container mx-auto h-screen overflow-hidden">
-        {children}
+        {React.cloneElement(children as React.ReactElement, {
+          isSidebarCollapsed,
+          onExpandSidebar: handleExpandSidebar,
+        })}
       </main>
     </div>
   );

@@ -1,5 +1,3 @@
-// ./src/pages/Dashboard.tsx
-
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
@@ -12,14 +10,18 @@ import {
   deleteBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlog';
-import { HomeOutlined, UserOutlined } from '@ant-design/icons';
+import { HomeOutlined, UserOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
 
-import { message } from 'antd';
+import { message, Tooltip, Button } from 'antd';
 import { Breadcrumb, Input } from 'antd';
-import type { GetProps } from 'antd';
 import BlogItem from '../components/BlogItem';
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  isSidebarCollapsed: boolean;
+  onExpandSidebar: () => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ isSidebarCollapsed, onExpandSidebar }) => {
   const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -81,24 +83,28 @@ const Dashboard: React.FC = () => {
     <div className="h-full flex flex-col">
       {contextHolder}
 
-      <div className="flex justify-between items-center mx-4">
-        <Breadcrumb
-          items={[
-            {
-              href: '',
-              title: <HomeOutlined />,
-            },
-            {
-              href: '',
-              title: (
-                <>
-                  <UserOutlined />
-                  <span>Dashboard</span>
-                </>
-              ),
-            },
-          ]}
-        />
+      <div className="flex justify-between items-center mx-4 my-8"> 
+        <div className="flex items-center">
+          {isSidebarCollapsed && (
+            <Tooltip title="显示侧边栏">
+              <Button
+                type="text"
+                icon={<MenuUnfoldOutlined />}
+                onClick={onExpandSidebar}
+                style={{ marginRight: 8 }}
+              />
+            </Tooltip>
+          )}
+          <Breadcrumb>
+            <Breadcrumb.Item href="">
+              <HomeOutlined />
+            </Breadcrumb.Item>
+            <Breadcrumb.Item href="">
+              <UserOutlined />
+              <span>Dashboard</span>
+            </Breadcrumb.Item>
+          </Breadcrumb>
+        </div>
         <Search placeholder="Search blogs" style={{ width: 200 }} />
       </div>
 
