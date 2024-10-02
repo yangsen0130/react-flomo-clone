@@ -46,7 +46,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
       return availableTags
         .map((tag) => tag.name)
-        // .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()))
+        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
         // .slice(0, 5);
     },
 
