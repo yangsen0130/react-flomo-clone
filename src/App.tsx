@@ -1,7 +1,7 @@
-import React, { useContext, useState } from 'react';
+// ./src/App.tsx
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Header from './components/Header';
-import Sidebar from './components/Sidebar';
 import Register from './pages/Register';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -21,16 +21,12 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* Protected Routes with Sidebar */}
+        {/* Protected Routes */}
         <Route
           path="/dashboard/*"
           element={
             user ? (
-              <DashboardLayout>
-                <Dashboard isSidebarCollapsed={false} onExpandSidebar={function (): void {
-                  throw new Error('Function not implemented.');
-                } } />
-              </DashboardLayout>
+              <Dashboard />
             ) : (
               <Navigate to="/login" replace />
             )
@@ -57,32 +53,5 @@ const PublicLayout: React.FC = () => (
     </main>
   </div>
 );
-
-// Dashboard Layout Component with Sidebar
-const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-
-  const handleCollapseSidebar = () => {
-    setIsSidebarCollapsed(true);
-  };
-
-  const handleExpandSidebar = () => {
-    setIsSidebarCollapsed(false);
-  };
-
-  return (
-    <div className="flex max-w-[960px] w-full mx-auto">
-      {!isSidebarCollapsed && (
-        <Sidebar isCollapsed={isSidebarCollapsed} onCollapse={handleCollapseSidebar} />
-      )}
-      <main className="flex-grow container mx-auto h-screen overflow-hidden">
-        {React.cloneElement(children as React.ReactElement, {
-          isSidebarCollapsed,
-          onExpandSidebar: handleExpandSidebar,
-        })}
-      </main>
-    </div>
-  );
-};
 
 export default App;

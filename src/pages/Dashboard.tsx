@@ -1,3 +1,4 @@
+// ./src/pages/Dashboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
@@ -15,13 +16,9 @@ import { HomeOutlined, UserOutlined, MenuUnfoldOutlined } from '@ant-design/icon
 import { message, Tooltip, Button } from 'antd';
 import { Breadcrumb, Input } from 'antd';
 import BlogItem from '../components/BlogItem';
+import Sidebar from '../components/Sidebar';
 
-interface DashboardProps {
-  isSidebarCollapsed: boolean;
-  onExpandSidebar: () => void;
-}
-
-const Dashboard: React.FC<DashboardProps> = ({ isSidebarCollapsed, onExpandSidebar }) => {
+const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
@@ -29,6 +26,17 @@ const Dashboard: React.FC<DashboardProps> = ({ isSidebarCollapsed, onExpandSideb
 
   const [messageApi, contextHolder] = message.useMessage();
   const { Search } = Input;
+
+  // State and handlers for sidebar collapse functionality
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+
+  const handleCollapseSidebar = () => {
+    setIsSidebarCollapsed(true);
+  };
+
+  const handleExpandSidebar = () => {
+    setIsSidebarCollapsed(false);
+  };
 
   useEffect(() => {
     const fetchUserAndBlogs = async () => {
@@ -80,54 +88,63 @@ const Dashboard: React.FC<DashboardProps> = ({ isSidebarCollapsed, onExpandSideb
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
   return (
-    <div className="h-full flex flex-col">
-      {contextHolder}
+    <div className="flex max-w-[960px] w-full mx-auto">
+      {/* Sidebar */}
+      {!isSidebarCollapsed && (
+        <Sidebar isCollapsed={isSidebarCollapsed} onCollapse={handleCollapseSidebar} />
+      )}
+      {/* Main Content */}
+      <main className="flex-grow container mx-auto h-screen overflow-hidden">
+        {contextHolder}
 
-      <div className="flex justify-between items-center mx-4 my-8"> 
-        <div className="flex items-center">
-          {isSidebarCollapsed && (
-            <Tooltip title="显示侧边栏">
-              <Button
-                type="text"
-                icon={<MenuUnfoldOutlined />}
-                onClick={onExpandSidebar}
-                style={{ marginRight: 8 }}
-              />
-            </Tooltip>
-          )}
-          <Breadcrumb>
-            <Breadcrumb.Item href="">
-              <HomeOutlined />
-            </Breadcrumb.Item>
-            <Breadcrumb.Item href="">
-              <UserOutlined />
-              <span>Dashboard</span>
-            </Breadcrumb.Item>
-          </Breadcrumb>
-        </div>
-        <Search placeholder="Search blogs" style={{ width: 200 }} />
-      </div>
-
-      <div className="flex-shrink-0 mb-4">
-        <CreateBlogForm onCreate={handleCreateBlog} />
-      </div>
-
-      <div className="flex-grow overflow-y-auto">
-        {blogs.length === 0 ? (
-          <p className="text-center">You haven't created any blogs yet.</p>
-        ) : (
-          <div className="space-y-4 pr-4">
-            {blogs.map((blog) => (
-              <BlogItem
-                key={blog.objectId}
-                blog={blog}
-                onEditSave={handleEditSave}
-                onDelete={handleDeleteBlog}
-              />
-            ))}
+        <div className="h-full flex flex-col">
+          <div className="flex justify-between items-center mx-4 my-8"> 
+            <div className="flex items-center">
+              {isSidebarCollapsed && (
+                <Tooltip title="Show Sidebar">
+                  <Button
+                    type="text"
+                    icon={<MenuUnfoldOutlined />}
+                    onClick={handleExpandSidebar}
+                    style={{ marginRight: 8 }}
+                  />
+                </Tooltip>
+              )}
+              <Breadcrumb>
+                <Breadcrumb.Item href="">
+                  <HomeOutlined />
+                </Breadcrumb.Item>
+                <Breadcrumb.Item href="">
+                  <UserOutlined />
+                  <span>Dashboard</span>
+                </Breadcrumb.Item>
+              </Breadcrumb>
+            </div>
+            <Search placeholder="Search blogs" style={{ width: 200 }} />
           </div>
-        )}
-      </div>
+
+          <div className="flex-shrink-0 mb-4">
+            <CreateBlogForm onCreate={handleCreateBlog} />
+          </div>
+
+          <div className="flex-grow overflow-y-auto">
+            {blogs.length === 0 ? (
+              <p className="text-center">You haven't created any blogs yet.</p>
+            ) : (
+              <div className="space-y-4 pr-4">
+                {blogs.map((blog) => (
+                  <BlogItem
+                    key={blog.objectId}
+                    blog={blog}
+                    onEditSave={handleEditSave}
+                    onDelete={handleDeleteBlog}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
     </div>
   );
 };

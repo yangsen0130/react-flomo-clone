@@ -146,9 +146,10 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
           contentEditable
           onInput={handleContentChange}
           onKeyDown={handleKeyDown}
-          className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[100px]"
-          style={{ minHeight: '100px' }}
-        ></div>
+          className="w-full outline rounded-md focus:outline-none min-h-[100px]"
+        >
+            <p className="text-gray-400 m-0 p-2" data-placeholder>Type your text here...</p>
+        </div>
         {showTagSuggestions && (
           <div className="absolute z-10 bg-white border rounded-md shadow-md mt-1 max-h-40 overflow-y-auto">
             {filteredTags.map((tag) => (
