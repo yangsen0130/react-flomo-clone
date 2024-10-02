@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { createBlog, Blog } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
@@ -8,7 +8,6 @@ import Document from '@tiptap/extension-document';
 import Mention from '@tiptap/extension-mention';
 import Paragraph from '@tiptap/extension-paragraph';
 import Text from '@tiptap/extension-text';
-// import suggestion from './editor/suggestion';
 import { TagsContext } from '../contexts/TagsContext';
 import { ReactRenderer } from '@tiptap/react';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
@@ -29,16 +28,26 @@ interface SuggestionResult {
 
 const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   const { user } = useContext(AuthContext);
-  const { tags } = useContext(TagsContext);
+  const { tags } = useContext(TagsContext); // Access tags from context
+  const tagsRef = useRef<Tag[]>(tags); // Store tags in a ref to ensure they persist
+
   const [messageApi, contextHolder] = message.useMessage();
 
+  // Ensure the ref gets updated when tags change
+  useEffect(() => {
+    tagsRef.current = tags;
+  }, [tags]);
 
-  const suggestion =  {
+  const suggestion = {
     items: ({ query }: { query: string }): string[] => {
-      return tags
+      // Access tags from the ref
+      const availableTags = tagsRef.current;
+      if (!availableTags || availableTags.length === 0) return [];
+
+      return availableTags
         .map((tag) => tag.name)
-        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()))
-        .slice(0, 5);
+        // .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()))
+        // .slice(0, 5);
     },
 
     render: (): SuggestionResult => {
@@ -93,9 +102,9 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
           component.destroy();
         },
       };
-    }
+    },
   };
-  
+
   const editor = useEditor({
     extensions: [
       Document,

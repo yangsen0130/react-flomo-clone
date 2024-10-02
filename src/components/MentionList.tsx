@@ -1,5 +1,5 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-// import './MentionList.scss';
+import { Menu } from 'antd';
 
 interface MentionListProps {
   items: string[];
@@ -57,19 +57,26 @@ const MentionList = forwardRef<MentionListRef, MentionListProps>((props, ref) =>
   }));
 
   return (
-    <div className="dropdown-menu" style={{ border: '1px solid #ccc', borderRadius: '4px', padding: '10px', backgroundColor: '#fff' }}>
-      {props.items.length
-      ? props.items.map((item, index) => (
-            <button
-              className={index === selectedIndex ? 'is-selected' : ''}
+    <div style={{ border: '1px solid #ccc', borderRadius: '4px', backgroundColor: '#fff', maxWidth: '200px' }}>
+      {props.items.length ? (
+        <Menu
+          selectedKeys={[String(selectedIndex)]}
+          onClick={(e) => selectItem(Number(e.key))}
+        >
+          {props.items.map((item, index) => (
+            <Menu.Item
               key={index}
-              onClick={() => selectItem(index)}
+              className={index === selectedIndex ? 'is-selected' : ''}
             >
               {item}
-            </button>
-          ))
-        : <div className="item">No result</div>
-      }
+            </Menu.Item>
+          ))}
+        </Menu>
+      ) : (
+        <div className="item" style={{ padding: '8px', textAlign: 'center' }}>
+          No result
+        </div>
+      )}
     </div>
   );
 });
