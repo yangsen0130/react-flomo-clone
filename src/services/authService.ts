@@ -18,9 +18,21 @@ const api = axios.create({
   },
 });
 
-export interface LeanCloudError {
+export interface LeanCloudErrorResponse {
   code: number;
   error: string;
+}
+
+export class LeanCloudError extends Error implements LeanCloudErrorResponse {
+  code: number;
+  error: string;
+
+  constructor(message: string, code: number) {
+    super(message);
+    this.name = 'LeanCloudError';
+    this.code = code;
+    this.error = message;
+  }
 }
 
 export interface User {
@@ -28,7 +40,7 @@ export interface User {
   email: string;
   emailVerified: boolean;
   createdAt: string;
-  // 根据需要添加更多字段
+  // Add other user fields as needed
 }
 
 export const register = async (email: string, password: string): Promise<void> => {
@@ -36,9 +48,9 @@ export const register = async (email: string, password: string): Promise<void> =
     await api.post('/1.1/users', { email, password, username: email });
     await api.post('/1.1/requestEmailVerify', { email });
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -48,21 +60,21 @@ export const login = async (email: string, password: string): Promise<User> => {
   try {
     const response = await api.post('/1.1/login', { email, password });
     if (!response.data.emailVerified) {
-      throw { error: 'Please verify your email before logging in.' } as LeanCloudError;
+      throw new LeanCloudError('Please verify your email before logging in.', 401);
     }
     localStorage.setItem('sessionToken', response.data.sessionToken);
-    localStorage.setItem('userData', JSON.stringify(response.data)); // 存储用户数据
+    localStorage.setItem('userData', JSON.stringify(response.data)); // Store user data
     return {
       objectId: response.data.objectId,
       email: response.data.email,
       emailVerified: response.data.emailVerified,
       createdAt: response.data.createdAt,
-      // 添加更多字段
+      // Add more fields as needed
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -71,7 +83,7 @@ export const login = async (email: string, password: string): Promise<User> => {
 export const getCurrentUser = async (): Promise<User> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     const response = await api.get('/1.1/users/me', {
@@ -82,12 +94,12 @@ export const getCurrentUser = async (): Promise<User> => {
       email: response.data.email,
       emailVerified: response.data.emailVerified,
       createdAt: response.data.createdAt,
-      // 添加更多字段
+      // Add more fields as needed
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -95,13 +107,13 @@ export const getCurrentUser = async (): Promise<User> => {
 
 export const logout = () => {
   localStorage.removeItem('sessionToken');
-  localStorage.removeItem('userData'); // 移除用户数据
+  localStorage.removeItem('userData'); // Remove user data
 };
 
 export const getCurrentUserId = (): string => {
   const userData = localStorage.getItem('userData');
   if (!userData) {
-    throw { error: 'No user data found' } as LeanCloudError;
+    throw new LeanCloudError('No user data found', 401);
   }
   const user = JSON.parse(userData);
   return user.objectId;

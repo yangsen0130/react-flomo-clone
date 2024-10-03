@@ -1,3 +1,4 @@
+// ./src/components/EditBlog.tsx
 import React, { useRef, useEffect, useContext } from 'react';
 import { Blog } from '../services/blogService';
 import { message, Button } from 'antd';
@@ -14,7 +15,7 @@ import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionProps } from '@tiptap/suggestion';
 import MentionList from './MentionList';
 import './tiptap.scss';
-import { AuthContext } from '../contexts/AuthContext';
+// Removed unused AuthContext import
 import { TagsContext } from '../contexts/TagsContext';
 import { LeanCloudError } from '../services/authService';
 import { addTagToBlog, removeTagFromBlog, createTag } from '../services/blogService';
@@ -42,7 +43,7 @@ interface SuggestionResult {
 }
 
 const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
-  const { user } = useContext(AuthContext);
+  // Removed unused user variable
   const { tags, refreshTags } = useContext(TagsContext);
   const tagsRef = useRef(tags);
 

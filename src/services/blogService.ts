@@ -1,6 +1,6 @@
 // ./src/services/blogService.ts
 import axios from 'axios';
-import { LeanCloudError, getCurrentUserId } from './authService';
+import { LeanCloudError, LeanCloudErrorResponse, getCurrentUserId } from './authService';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 const APP_ID = process.env.REACT_APP_APP_ID;
@@ -38,7 +38,7 @@ export const getUserBlogs = async (
 ): Promise<Blog[]> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
 
   try {
@@ -73,9 +73,9 @@ export const getUserBlogs = async (
     }
     return blogs;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -84,7 +84,7 @@ export const getUserBlogs = async (
 export const getTagsForBlog = async (blogId: string): Promise<Tag[]> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     const response = await api.get('/1.1/classes/Blog_Tags', {
@@ -110,9 +110,9 @@ export const getTagsForBlog = async (blogId: string): Promise<Tag[]> => {
     });
     return tags;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -121,7 +121,7 @@ export const getTagsForBlog = async (blogId: string): Promise<Tag[]> => {
 export const addTagToBlog = async (blogId: string, tagId: string): Promise<void> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     await api.post(
@@ -143,9 +143,9 @@ export const addTagToBlog = async (blogId: string, tagId: string): Promise<void>
       }
     );
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -154,7 +154,7 @@ export const addTagToBlog = async (blogId: string, tagId: string): Promise<void>
 export const removeTagFromBlog = async (blogId: string, tagId: string): Promise<void> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     // Find the Blog_Tags object to delete
@@ -183,9 +183,9 @@ export const removeTagFromBlog = async (blogId: string, tagId: string): Promise<
       });
     }
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -195,7 +195,7 @@ export const createTag = async (name: string): Promise<Tag> => {
   const sessionToken = localStorage.getItem('sessionToken');
   const userId = getCurrentUserId();
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     const response = await api.post(
@@ -217,9 +217,9 @@ export const createTag = async (name: string): Promise<Tag> => {
       name,
     };
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -229,7 +229,7 @@ export const getAllTags = async (): Promise<Tag[]> => {
   const sessionToken = localStorage.getItem('sessionToken');
   const userId = getCurrentUserId();
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
   try {
     const response = await api.get('/1.1/classes/Tag', {
@@ -251,9 +251,9 @@ export const getAllTags = async (): Promise<Tag[]> => {
     }));
     return tags;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -262,7 +262,7 @@ export const getAllTags = async (): Promise<Tag[]> => {
 export const createBlog = async (content: string): Promise<Blog> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
 
   try {
@@ -283,9 +283,9 @@ export const createBlog = async (content: string): Promise<Blog> => {
     response.data.content = content;
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -297,7 +297,7 @@ export const updateBlog = async (
 ): Promise<Blog> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
 
   try {
@@ -313,9 +313,9 @@ export const updateBlog = async (
     response.data.content = content;
     return response.data;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -324,7 +324,7 @@ export const updateBlog = async (
 export const deleteBlog = async (blogId: string): Promise<void> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
 
   try {
@@ -332,9 +332,9 @@ export const deleteBlog = async (blogId: string): Promise<void> => {
       headers: { 'X-LC-Session': sessionToken },
     });
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
@@ -346,7 +346,7 @@ export const getBlogCountsByDate = async (
 ): Promise<{ [date: string]: number }> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
-    throw { error: 'No session token found' } as LeanCloudError;
+    throw new LeanCloudError('No session token found', 401);
   }
 
   const startDate = new Date();
@@ -387,9 +387,9 @@ export const getBlogCountsByDate = async (
 
     return counts;
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      const leanCloudError = error.response?.data as LeanCloudError;
-      throw leanCloudError;
+    if (axios.isAxiosError(error) && error.response?.data) {
+      const leanCloudErrorData = error.response.data as LeanCloudErrorResponse;
+      throw new LeanCloudError(leanCloudErrorData.error, leanCloudErrorData.code);
     }
     throw error;
   }
