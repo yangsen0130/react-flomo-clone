@@ -1,12 +1,7 @@
-// ./src/components/EditBlog.tsx
-
-import React, { useState, useRef, useEffect, useContext } from 'react';
+import React, { useRef, useEffect, useContext } from 'react';
 import { Blog } from '../services/blogService';
-import { message } from 'antd';
+import { message, Button } from 'antd';
 import { EditorContent, useEditor } from '@tiptap/react';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
 import Mention from '@tiptap/extension-mention';
 import Bold from '@tiptap/extension-bold';
 import BulletList from '@tiptap/extension-bullet-list';
@@ -25,6 +20,13 @@ import { LeanCloudError } from '../services/authService';
 import { addTagToBlog, removeTagFromBlog, createTag } from '../services/blogService';
 import Typography from '@tiptap/extension-typography';
 import StarterKit from '@tiptap/starter-kit';
+import {
+  BoldOutlined,
+  UnorderedListOutlined,
+  OrderedListOutlined,
+  HighlightOutlined,
+  UnderlineOutlined,
+} from '@ant-design/icons';
 
 interface EditBlogProps {
   blog: Blog;
@@ -51,7 +53,7 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
   }, [tags]);
 
   const suggestion = {
-    char: "#",
+    char: '#',
 
     items: ({ query }: { query: string }): string[] => {
       const availableTags = tagsRef.current;
@@ -127,9 +129,6 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
 
   const editor = useEditor({
     extensions: [
-      // Document,
-      // Paragraph,
-      // Text,
       Bold,
       Underline,
       StarterKit,
@@ -206,19 +205,59 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
     <div className="p-4 bg-white rounded shadow relative">
       {contextHolder}
       <EditorContent editor={editor} />
-      <div className="mt-2 flex justify-end space-x-2">
-        <button
-          onClick={onCancel}
-          className="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600 transition"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
-        >
-          Save
-        </button>
+      {/* Toolbar and Buttons */}
+      <div className="mt-2 flex items-center justify-between">
+        {/* Toolbar Buttons */}
+        <div className="flex space-x-2">
+          <Button
+            size="small"
+            icon={<BoldOutlined />}
+            onClick={() => editor?.chain().focus().toggleBold().run()}
+            type={editor?.isActive('bold') ? 'primary' : 'default'}
+          />
+          <Button
+            size="small"
+            icon={<UnderlineOutlined />}
+            onClick={() => editor?.chain().focus().toggleUnderline().run()}
+            type={editor?.isActive('underline') ? 'primary' : 'default'}
+          />
+          <Button
+            size="small"
+            icon={<HighlightOutlined />}
+            onClick={() => editor?.chain().focus().toggleHighlight().run()}
+            type={editor?.isActive('highlight') ? 'primary' : 'default'}
+          />
+          <Button
+            size="small"
+            icon={<UnorderedListOutlined />}
+            onClick={() => editor?.chain().focus().toggleBulletList().run()}
+            type={editor?.isActive('bulletList') ? 'primary' : 'default'}
+          />
+          <Button
+            size="small"
+            icon={<OrderedListOutlined />}
+            onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+            type={editor?.isActive('orderedList') ? 'primary' : 'default'}
+          />
+        </div>
+
+        {/* Cancel and Save Buttons */}
+        <div className="flex space-x-2">
+          <Button
+            onClick={onCancel}
+            size="small"
+            className="bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600 transition"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            size="small"
+            className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition"
+          >
+            Save
+          </Button>
+        </div>
       </div>
     </div>
   );

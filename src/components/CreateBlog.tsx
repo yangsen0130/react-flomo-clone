@@ -1,14 +1,11 @@
-import './tiptap.scss'
+import './tiptap.scss';
 
 import React, { useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import { createBlog, Blog, addTagToBlog, createTag } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
-import { message } from 'antd';
+import { message, Button } from 'antd';
 import { EditorContent, useEditor } from '@tiptap/react';
-import Document from '@tiptap/extension-document';
-import Paragraph from '@tiptap/extension-paragraph';
-import Text from '@tiptap/extension-text';
 import Mention from '@tiptap/extension-mention';
 import Bold from '@tiptap/extension-bold';
 import BulletList from '@tiptap/extension-bullet-list';
@@ -24,6 +21,14 @@ import MentionList from './MentionList';
 import { Tag } from '../services/blogService';
 import Typography from '@tiptap/extension-typography';
 import StarterKit from '@tiptap/starter-kit';
+import {
+  BoldOutlined,
+  UnorderedListOutlined,
+  OrderedListOutlined,
+  HighlightOutlined,
+  UnderlineOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
@@ -49,7 +54,7 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   }, [tags]);
 
   const suggestion = {
-    char: "#",
+    char: '#',
 
     items: ({ query }: { query: string }): string[] => {
       const availableTags = tagsRef.current;
@@ -125,9 +130,6 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
   const editor = useEditor({
     extensions: [
-      // Document,
-      // Paragraph,
-      // Text,
       Bold,
       Underline,
       StarterKit,
@@ -213,12 +215,53 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
       <form onSubmit={handleSubmit} className="relative">
         <EditorContent editor={editor} />
 
-        <button
-          type="submit"
-          className="w-full mt-2 bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-        >
-          Create Blog
-        </button>
+        {/* Toolbar and Submit Button */}
+        <div className="mt-2 flex items-center justify-between">
+          {/* Toolbar Buttons */}
+          <div className="flex space-x-2">
+            <Button
+              size="small"
+              icon={<BoldOutlined />}
+              onClick={() => editor?.chain().focus().toggleBold().run()}
+              type={editor?.isActive('bold') ? 'primary' : 'default'}
+            />
+            <Button
+              size="small"
+              icon={<UnderlineOutlined />}
+              onClick={() => editor?.chain().focus().toggleUnderline().run()}
+              type={editor?.isActive('underline') ? 'primary' : 'default'}
+            />
+            <Button
+              size="small"
+              icon={<HighlightOutlined />}
+              onClick={() => editor?.chain().focus().toggleHighlight().run()}
+              type={editor?.isActive('highlight') ? 'primary' : 'default'}
+            />
+            <Button
+              size="small"
+              icon={<UnorderedListOutlined />}
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
+              type={editor?.isActive('bulletList') ? 'primary' : 'default'}
+            />
+            <Button
+              size="small"
+              icon={<OrderedListOutlined />}
+              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+              type={editor?.isActive('orderedList') ? 'primary' : 'default'}
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="primary"
+            size="small"
+            htmlType="submit"
+            icon={<PlusOutlined />}
+            style={{ backgroundColor: '#1890ff', borderColor: '#1890ff' }}
+          >
+            New
+          </Button>
+        </div>
       </form>
     </div>
   );
