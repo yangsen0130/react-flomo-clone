@@ -49,34 +49,40 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   }, [tags]);
 
   const suggestion = {
-
     char: "#",
+    
     items: ({ query }: { query: string }): string[] => {
-      // Access tags from the ref
       const availableTags = tagsRef.current;
-      if (!availableTags || availableTags.length === 0) return [];
-
-      return availableTags
+      if (!availableTags || availableTags.length === 0) return [query];
+  
+      // Filter existing tags based on the query
+      const matchingTags = availableTags
         .map((tag) => tag.name)
-        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()))
-        .slice(0, 5);
+        .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
+  
+      // If no matching tags, include the query as a potential new tag
+      if (matchingTags.length === 0 || !matchingTags.includes(query)) {
+        return [...matchingTags, query]; // Add the user's input as the last suggestion
+      }
+  
+      return matchingTags;
     },
-
+  
     render: (): SuggestionResult => {
       let component: ReactRenderer;
       let popup: TippyInstance[];
-
+  
       return {
         onStart: (props: SuggestionProps) => {
           component = new ReactRenderer(MentionList, {
             props,
             editor: props.editor,
           });
-
+  
           if (!props.clientRect) {
             return;
           }
-
+  
           popup = tippy('body', {
             getReferenceClientRect: props.clientRect as any,
             appendTo: () => document.body,
@@ -87,28 +93,28 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
             placement: 'bottom-start',
           });
         },
-
+  
         onUpdate(props: SuggestionProps) {
           component.updateProps(props);
-
+  
           if (!props.clientRect) {
             return;
           }
-
+  
           popup[0].setProps({
             getReferenceClientRect: props.clientRect as any,
           });
         },
-
+  
         onKeyDown(props: { event: KeyboardEvent }) {
           if (props.event.key === 'Escape') {
             popup[0].hide();
             return true;
           }
-
+          
           return (component.ref as any)?.onKeyDown(props) || false;
         },
-
+  
         onExit() {
           popup[0].destroy();
           component.destroy();
