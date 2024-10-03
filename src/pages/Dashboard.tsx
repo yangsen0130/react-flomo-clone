@@ -1,5 +1,5 @@
 // ./src/pages/Dashboard.tsx
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import {
@@ -10,7 +10,7 @@ import {
   deleteBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlog';
-import { message } from 'antd';
+import { message, Button } from 'antd';
 import BlogItem from '../components/BlogItem';
 import Sidebar from '../components/Sidebar';
 import SearchBar from '../components/SearchBar';
@@ -28,6 +28,11 @@ const Dashboard: React.FC = () => {
 
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [hasMoreBlogs, setHasMoreBlogs] = useState(true);
+  const limit = 10; // Number of blogs per page
+
   const handleCollapseSidebar = () => {
     setIsSidebarCollapsed(true);
   };
@@ -43,15 +48,23 @@ const Dashboard: React.FC = () => {
         return;
       }
       try {
-        const userBlogs = await getUserBlogs(user.objectId);
-        setBlogs(userBlogs);
+        const userBlogs = await getUserBlogs(user.objectId, page, limit);
+        // If no more blogs are returned, set hasMoreBlogs to false
+        if (userBlogs.length < limit) {
+          setHasMoreBlogs(false);
+        }
+        if (page === 1) {
+          setBlogs(userBlogs);
+        } else {
+          setBlogs((prevBlogs) => [...prevBlogs, ...userBlogs]);
+        }
       } catch (error) {
-        console.error('Failed to fetch blogs or tags:', error);
-        messageApi.error('Failed to fetch blogs or tags.');
+        console.error('Failed to fetch blogs:', error);
+        messageApi.error('Failed to fetch blogs.');
       }
     };
     fetchUserAndBlogs();
-  }, [user, navigate, messageApi]);
+  }, [user, navigate, messageApi, page]);
 
   const handleEditSave = async (blogId: string, content: string) => {
     try {
@@ -88,23 +101,25 @@ const Dashboard: React.FC = () => {
     return div.textContent || div.innerText || '';
   };
 
-  // Filter blogs based on search term and selectedTag
-  const filteredBlogs = blogs.filter(blog => {
-    let matchesSearchTerm = true;
-    let matchesTag = true;
+  // Use useMemo to memoize filteredBlogs and prevent unnecessary computations
+  const filteredBlogs = useMemo(() => {
+    return blogs.filter(blog => {
+      let matchesSearchTerm = true;
+      let matchesTag = true;
 
-    // If a search term is set, check if content matches
-    if (searchTerm) {
-      matchesSearchTerm = stripHTML(blog.content).toLowerCase().includes(searchTerm.toLowerCase());
-    }
+      // If a search term is set, check if content matches
+      if (searchTerm) {
+        matchesSearchTerm = stripHTML(blog.content).toLowerCase().includes(searchTerm.toLowerCase());
+      }
 
-    // If a tag is selected, check if blog has that tag
-    if (selectedTag) {
-      matchesTag = (blog.tags && blog.tags.some(tag => tag.objectId === selectedTag.objectId)) ?? false;
-    }
+      // If a tag is selected, check if blog has that tag
+      if (selectedTag) {
+        matchesTag = (blog.tags && blog.tags.some(tag => tag.objectId === selectedTag.objectId)) ?? false;
+      }
 
-    return matchesSearchTerm && matchesTag;
-  });
+      return matchesSearchTerm && matchesTag;
+    });
+  }, [blogs, searchTerm, selectedTag]);
 
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
@@ -120,7 +135,7 @@ const Dashboard: React.FC = () => {
         />
       )}
       {/* Main Content */}
-      <main className="flex-grow container mx-auto h-screen overflow-hidden">
+      <main className="flex-grow container max-w-[720px] mx-auto h-screen overflow-hidden">
         {contextHolder}
 
         <div className="h-full flex flex-col">
@@ -152,6 +167,12 @@ const Dashboard: React.FC = () => {
                     onDelete={handleDeleteBlog}
                   />
                 ))}
+                {/* Load More Button */}
+                {hasMoreBlogs && (
+                  <div className="text-center my-4">
+                    <Button onClick={() => setPage(page + 1)}>Load More</Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

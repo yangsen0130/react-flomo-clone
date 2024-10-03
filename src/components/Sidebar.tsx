@@ -41,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
     </Menu>
   );
 
-  // Compute tag counts
+  // Compute tag counts using useMemo to prevent unnecessary computations
   const tagCounts = React.useMemo(() => {
     const counts: { [tagId: string]: number } = {};
     blogs.forEach(blog => {
@@ -128,4 +128,4 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
   );
 };
 
-export default Sidebar;
+export default React.memo(Sidebar);

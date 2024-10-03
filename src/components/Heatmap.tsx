@@ -1,6 +1,6 @@
 // ./src/components/Heatmap.tsx
 
-import React, { useEffect, useState, useContext } from 'react';
+import React, { useEffect, useState, useContext, useMemo } from 'react';
 import { getBlogCountsByDate } from '../services/blogService';
 import { AuthContext } from '../contexts/AuthContext';
 import { Tooltip } from 'antd';
@@ -27,8 +27,20 @@ const Heatmap: React.FC = () => {
     fetchCounts();
   }, [user]);
 
-  const generateHeatmap = () => {
-    const cells = [];
+  const getColor = (intensity: number) => {
+    const startColor = [227, 242, 253]; // Light blue
+    const endColor = [21, 101, 192]; // Dark blue
+
+    const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * intensity);
+    const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * intensity);
+    const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * intensity);
+
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+
+  // Use useMemo to memoize the generated heatmap cells
+  const cells = useMemo(() => {
+    const tempCells = [];
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - (days - 1)); // Oldest date
     for (let i = 0; i < days; i++) {
@@ -42,7 +54,7 @@ const Heatmap: React.FC = () => {
       const color = getColor(intensity);
 
       // Create cell
-      cells.push(
+      tempCells.push(
         <Tooltip key={dateString} title={`${count} post(s) on ${dateString}`}>
           <div
             style={{
@@ -56,32 +68,22 @@ const Heatmap: React.FC = () => {
         </Tooltip>
       );
     }
-    return cells;
-  };
-
-  const getColor = (intensity: number) => {
-    const startColor = [227, 242, 253]; // Light blue
-    const endColor = [21, 101, 192]; // Dark blue
-
-    const r = Math.round(startColor[0] + (endColor[0] - startColor[0]) * intensity);
-    const g = Math.round(startColor[1] + (endColor[1] - startColor[1]) * intensity);
-    const b = Math.round(startColor[2] + (endColor[2] - startColor[2]) * intensity);
-
-    return `rgb(${r}, ${g}, ${b})`;
-  };
+    return tempCells;
+  }, [counts, maxCount]);
 
   // Arrange cells in 7 rows and 12 columns
-  const cells = generateHeatmap();
-
-  const rows = [];
-  for (let i = 0; i < 7; i++) {
-    const rowCells = cells.slice(i * 12, (i + 1) * 12);
-    rows.push(
-      <div key={i} style={{ display: 'flex' }}>
-        {rowCells}
-      </div>
-    );
-  }
+  const rows = useMemo(() => {
+    const tempRows = [];
+    for (let i = 0; i < 7; i++) {
+      const rowCells = cells.slice(i * 12, (i + 1) * 12);
+      tempRows.push(
+        <div key={i} style={{ display: 'flex' }}>
+          {rowCells}
+        </div>
+      );
+    }
+    return tempRows;
+  }, [cells]);
 
   return (
     <div>
@@ -91,4 +93,4 @@ const Heatmap: React.FC = () => {
   );
 };
 
-export default Heatmap;
+export default React.memo(Heatmap);

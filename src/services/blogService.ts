@@ -31,13 +31,18 @@ export interface Blog {
   tags?: Tag[];
 }
 
-export const getUserBlogs = async (userId: string): Promise<Blog[]> => {
+export const getUserBlogs = async (
+  userId: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<Blog[]> => {
   const sessionToken = localStorage.getItem('sessionToken');
   if (!sessionToken) {
     throw { error: 'No session token found' } as LeanCloudError;
   }
 
   try {
+    const skip = (page - 1) * limit;
     const response = await api.get('/1.1/classes/Blog', {
       headers: { 'X-LC-Session': sessionToken },
       params: {
@@ -45,6 +50,8 @@ export const getUserBlogs = async (userId: string): Promise<Blog[]> => {
           author: { __type: 'Pointer', className: '_User', objectId: userId },
         }),
         order: '-createdAt',
+        limit,
+        skip,
       },
     });
     const blogs = response.data.results;

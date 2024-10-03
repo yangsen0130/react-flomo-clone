@@ -50,4 +50,4 @@ const BlogItem: React.FC<BlogItemProps> = ({ blog, onEditSave, onDelete }) => {
   );
 };
 
-export default BlogItem;
+export default React.memo(BlogItem);

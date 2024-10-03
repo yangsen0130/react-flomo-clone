@@ -41,7 +41,7 @@ const DisplayBlog: React.FC<DisplayBlogProps> = ({ blog, onEdit, onDelete }) => 
         Created at: {new Date(blog.createdAt).toLocaleString()}
       </small>
       <div className="mt-2">
-        <strong>Tags:</strong>{' '}
+        {/* <strong>Tags:</strong>{' '} */}
         {blog.tags && blog.tags.length > 0 ? (
           blog.tags.map((tag) => (
             <span
@@ -52,11 +52,11 @@ const DisplayBlog: React.FC<DisplayBlogProps> = ({ blog, onEdit, onDelete }) => 
             </span>
           ))
         ) : (
-          <span>No tags</span>
+          <span></span>
         )}
       </div>
     </div>
   );
 };
 
-export default DisplayBlog;
+export default React.memo(DisplayBlog);
