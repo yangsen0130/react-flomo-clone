@@ -4,6 +4,7 @@ import React from 'react';
 import { Blog } from '../services/blogService';
 import { Menu, Dropdown } from 'antd';
 import { MoreOutlined } from '@ant-design/icons';
+import './tiptap.scss';
 
 interface DisplayBlogProps {
   blog: Blog;
@@ -31,7 +32,11 @@ const DisplayBlog: React.FC<DisplayBlogProps> = ({ blog, onEdit, onDelete }) => 
           <MoreOutlined style={{ fontSize: '20px' }} />
         </Dropdown>
       </div>
-      <div className="text-gray-700">{blog.content}</div>
+      {/* Render content as HTML */}
+      <div
+        className="content text-gray-700"
+        dangerouslySetInnerHTML={{ __html: blog.content }}
+      ></div>
       <small className="text-gray-500">
         Created at: {new Date(blog.createdAt).toLocaleString()}
       </small>

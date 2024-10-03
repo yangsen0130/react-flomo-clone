@@ -2,7 +2,7 @@ import './tiptap.scss'
 
 import React, { useContext, useRef, useEffect } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
-import { createBlog, Blog } from '../services/blogService';
+import { createBlog, Blog, addTagToBlog, createTag } from '../services/blogService';
 import { LeanCloudError } from '../services/authService';
 import { message } from 'antd';
 import { EditorContent, useEditor } from '@tiptap/react';
@@ -22,8 +22,8 @@ import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionProps } from '@tiptap/suggestion';
 import MentionList from './MentionList';
 import { Tag } from '../services/blogService';
-import Typography from '@tiptap/extension-typography'
-import StarterKit from '@tiptap/starter-kit'
+import Typography from '@tiptap/extension-typography';
+import StarterKit from '@tiptap/starter-kit';
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
@@ -38,7 +38,7 @@ interface SuggestionResult {
 
 const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
   const { user } = useContext(AuthContext);
-  const { tags } = useContext(TagsContext); // Access tags from context
+  const { tags, refreshTags } = useContext(TagsContext); // Added refreshTags
   const tagsRef = useRef<Tag[]>(tags); // Store tags in a ref to ensure they persist
 
   const [messageApi, contextHolder] = message.useMessage();
@@ -50,39 +50,39 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
   const suggestion = {
     char: "#",
-    
+
     items: ({ query }: { query: string }): string[] => {
       const availableTags = tagsRef.current;
       if (!availableTags || availableTags.length === 0) return [query];
-  
+
       // Filter existing tags based on the query
       const matchingTags = availableTags
         .map((tag) => tag.name)
         .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
-  
+
       // If no matching tags, include the query as a potential new tag
       if (matchingTags.length === 0 || !matchingTags.includes(query)) {
         return [...matchingTags, query]; // Add the user's input as the last suggestion
       }
-  
+
       return matchingTags;
     },
-  
+
     render: (): SuggestionResult => {
       let component: ReactRenderer;
       let popup: TippyInstance[];
-  
+
       return {
         onStart: (props: SuggestionProps) => {
           component = new ReactRenderer(MentionList, {
             props,
             editor: props.editor,
           });
-  
+
           if (!props.clientRect) {
             return;
           }
-  
+
           popup = tippy('body', {
             getReferenceClientRect: props.clientRect as any,
             appendTo: () => document.body,
@@ -93,28 +93,28 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
             placement: 'bottom-start',
           });
         },
-  
+
         onUpdate(props: SuggestionProps) {
           component.updateProps(props);
-  
+
           if (!props.clientRect) {
             return;
           }
-  
+
           popup[0].setProps({
             getReferenceClientRect: props.clientRect as any,
           });
         },
-  
+
         onKeyDown(props: { event: KeyboardEvent }) {
           if (props.event.key === 'Escape') {
             popup[0].hide();
             return true;
           }
-          
+
           return (component.ref as any)?.onKeyDown(props) || false;
         },
-  
+
         onExit() {
           popup[0].destroy();
           component.destroy();
@@ -165,8 +165,32 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
     const content = editor.getHTML();
 
     try {
+      // Extract tags from content
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(content, 'text/html');
+      const mentionElements = doc.querySelectorAll('.mention');
+      const tagNamesSet = new Set<string>();
+      mentionElements.forEach((el) => {
+        tagNamesSet.add(el.textContent?.replace(/^#/, '') || '');
+      });
+
+      const tagNames = Array.from(tagNamesSet).filter((name) => name.trim() !== '');
+
       // Create the blog
       const newBlog = await createBlog(content);
+
+      // Handle tags
+      for (const tagName of tagNames) {
+        let tag = tagsRef.current.find((t) => t.name === tagName);
+        if (!tag) {
+          // Create new tag
+          tag = await createTag(tagName);
+          // Refresh tags in context
+          refreshTags();
+        }
+        // Add tag to blog
+        await addTagToBlog(newBlog.objectId, tag.objectId);
+      }
 
       // Invoke the callback with the new blog
       onCreate(newBlog);
