@@ -1,3 +1,4 @@
+// ./src/services/authService.ts
 import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
@@ -26,6 +27,7 @@ export interface User {
   objectId: string;
   email: string;
   emailVerified: boolean;
+  createdAt: string;
   // 根据需要添加更多字段
 }
 
@@ -54,6 +56,7 @@ export const login = async (email: string, password: string): Promise<User> => {
       objectId: response.data.objectId,
       email: response.data.email,
       emailVerified: response.data.emailVerified,
+      createdAt: response.data.createdAt,
       // 添加更多字段
     };
   } catch (error) {
@@ -78,6 +81,7 @@ export const getCurrentUser = async (): Promise<User> => {
       objectId: response.data.objectId,
       email: response.data.email,
       emailVerified: response.data.emailVerified,
+      createdAt: response.data.createdAt,
       // 添加更多字段
     };
   } catch (error) {
@@ -94,7 +98,6 @@ export const logout = () => {
   localStorage.removeItem('userData'); // 移除用户数据
 };
 
-// 新增: 获取当前用户ID
 export const getCurrentUserId = (): string => {
   const userData = localStorage.getItem('userData');
   if (!userData) {

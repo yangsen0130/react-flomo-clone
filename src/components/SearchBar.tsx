@@ -1,14 +1,16 @@
 // ./src/components/SearchBar.tsx
-
 import React from 'react';
 import { Breadcrumb, Tooltip, Button, Input } from 'antd';
 import { HomeOutlined, MenuUnfoldOutlined } from '@ant-design/icons';
+import { Tag } from '../services/blogService';
 
 interface SearchBarProps {
   isSidebarCollapsed: boolean;
   onExpandSidebar: () => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  selectedTag: Tag | null;
+  setSelectedTag: (tag: Tag | null) => void;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -16,6 +18,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
   onExpandSidebar,
   searchTerm,
   setSearchTerm,
+  selectedTag,
+  setSelectedTag,
 }) => {
   const { Search } = Input;
 
@@ -25,6 +29,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   const handleClearSearch = () => {
     setSearchTerm('');
+    setSelectedTag(null);
   };
 
   return (
@@ -41,12 +46,17 @@ const SearchBar: React.FC<SearchBarProps> = ({
           </Tooltip>
         )}
         <Breadcrumb>
-          <Breadcrumb.Item href="">
+          <Breadcrumb.Item onClick={handleClearSearch}>
             <HomeOutlined />
           </Breadcrumb.Item>
-          <Breadcrumb.Item onClick={handleClearSearch}>
+          <Breadcrumb.Item onClick={() => setSelectedTag(null)}>
             <span>全部笔记</span>
           </Breadcrumb.Item>
+          {selectedTag && (
+            <Breadcrumb.Item>
+              <span>#{selectedTag.name}</span>
+            </Breadcrumb.Item>
+          )}
           {searchTerm && (
             <Breadcrumb.Item>
               <span>搜索</span>

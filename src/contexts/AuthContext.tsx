@@ -1,3 +1,4 @@
+// ./src/contexts/AuthContext.tsx
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { getCurrentUser, login as authLogin, logout as authLogout, register as authRegister } from '../services/authService';
 // import { LeanCloudError } from '../services/authService';
@@ -6,6 +7,7 @@ interface User {
   objectId: string;
   email: string;
   emailVerified: boolean;
+  createdAt: string;
   // 添加其他需要的用户字段
 }
 

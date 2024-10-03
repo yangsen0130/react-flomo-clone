@@ -47,8 +47,8 @@ const Heatmap: React.FC = () => {
           <div
             style={{
               backgroundColor: color,
-              width: '12px',
-              height: '12px',
+              width: '13px',
+              height: '13px',
               margin: '2px',
               borderRadius: '2px',
             }}
@@ -85,7 +85,7 @@ const Heatmap: React.FC = () => {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-2">Blog Activity</h3>
+      {/* <h3 className="text-lg font-semibold mb-2">Blog Activity</h3> */}
       <div>{rows}</div>
     </div>
   );

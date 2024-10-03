@@ -1,4 +1,3 @@
-
 // ./src/pages/Dashboard.tsx
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -6,22 +5,20 @@ import { AuthContext } from '../contexts/AuthContext';
 import {
   getUserBlogs,
   Blog,
-  getAllTags,
   Tag,
   updateBlog,
   deleteBlog,
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlog';
-import { MenuUnfoldOutlined } from '@ant-design/icons';
 import { message } from 'antd';
 import BlogItem from '../components/BlogItem';
 import Sidebar from '../components/Sidebar';
-import SearchBar from '../components/SearchBar'; // Import the SearchBar component
+import SearchBar from '../components/SearchBar';
 
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
-  const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
   const navigate = useNavigate();
 
   const [messageApi, contextHolder] = message.useMessage();
@@ -48,8 +45,6 @@ const Dashboard: React.FC = () => {
       try {
         const userBlogs = await getUserBlogs(user.objectId);
         setBlogs(userBlogs);
-        const tags = await getAllTags();
-        setAllTags(tags);
       } catch (error) {
         console.error('Failed to fetch blogs or tags:', error);
         messageApi.error('Failed to fetch blogs or tags.');
@@ -93,10 +88,23 @@ const Dashboard: React.FC = () => {
     return div.textContent || div.innerText || '';
   };
 
-  // Filter blogs based on search term
-  const filteredBlogs = searchTerm
-    ? blogs.filter((blog) => stripHTML(blog.content).toLowerCase().includes(searchTerm.toLowerCase()))
-    : blogs;
+  // Filter blogs based on search term and selectedTag
+  const filteredBlogs = blogs.filter(blog => {
+    let matchesSearchTerm = true;
+    let matchesTag = true;
+
+    // If a search term is set, check if content matches
+    if (searchTerm) {
+      matchesSearchTerm = stripHTML(blog.content).toLowerCase().includes(searchTerm.toLowerCase());
+    }
+
+    // If a tag is selected, check if blog has that tag
+    if (selectedTag) {
+      matchesTag = (blog.tags && blog.tags.some(tag => tag.objectId === selectedTag.objectId)) ?? false;
+    }
+
+    return matchesSearchTerm && matchesTag;
+  });
 
   if (!user) return <p className="text-center mt-8">Loading...</p>;
 
@@ -104,19 +112,25 @@ const Dashboard: React.FC = () => {
     <div className="flex max-w-[960px] w-full mx-auto">
       {/* Sidebar */}
       {!isSidebarCollapsed && (
-        <Sidebar isCollapsed={isSidebarCollapsed} onCollapse={handleCollapseSidebar} />
+        <Sidebar
+          isCollapsed={isSidebarCollapsed}
+          onCollapse={handleCollapseSidebar}
+          blogs={blogs}
+          setSelectedTag={setSelectedTag}
+        />
       )}
       {/* Main Content */}
       <main className="flex-grow container mx-auto h-screen overflow-hidden">
         {contextHolder}
 
         <div className="h-full flex flex-col">
-          {/* Replace the previous header with SearchBar */}
           <SearchBar
             isSidebarCollapsed={isSidebarCollapsed}
             onExpandSidebar={handleExpandSidebar}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
+            selectedTag={selectedTag}
+            setSelectedTag={setSelectedTag}
           />
 
           <div className="flex-shrink-0 mb-4">
@@ -126,7 +140,7 @@ const Dashboard: React.FC = () => {
           <div className="flex-grow overflow-y-auto">
             {filteredBlogs.length === 0 ? (
               <p className="text-center">
-                {searchTerm ? 'No blogs found.' : "You haven't created any blogs yet."}
+                {searchTerm || selectedTag ? 'No blogs found.' : "You haven't created any blogs yet."}
               </p>
             ) : (
               <div className="space-y-4 pr-4">
