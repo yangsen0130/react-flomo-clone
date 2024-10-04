@@ -18,7 +18,7 @@ const Header: React.FC = () => {
         <div className="flex items-center space-x-4">
           {/* Updated Link from "/" to "/dashboard" */}
           <Link to="/dashboard" className="text-xl font-bold">
-            My Blog
+            Flomo Clone
           </Link>
           {user && (
             <span className="text-md">

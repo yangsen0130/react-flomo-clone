@@ -1,20 +1,24 @@
+// ./src/pages/Login.tsx
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import { LeanCloudError } from '../services/authService';
+import { Input, Form, Button, Typography } from 'antd';
+import { EyeInvisibleOutlined, EyeTwoTone } from '@ant-design/icons';
+
+const { Title, Text } = Typography;
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
-  const { login } = useContext(AuthContext); // 使用 AuthContext
+  const { login } = useContext(AuthContext);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: { email: string; password: string }) => {
     setMessage('');
     try {
-      await login(email, password);
+      await login(values.email, values.password);
       navigate('/dashboard');
     } catch (error) {
       const leanCloudError = error as LeanCloudError;
@@ -24,36 +28,51 @@ const Login: React.FC = () => {
 
   return (
     <div className="max-w-md mx-auto mt-8 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-4">Login</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <input
-            type="email"
+      <Title level={2} className="text-center mb-6">
+        Login
+      </Title>
+      <Form onFinish={handleSubmit} layout="vertical">
+        <Form.Item
+          label="Email"
+          name="email"
+          rules={[
+            { required: true, message: 'Please input your Email!' },
+            { type: 'email', message: 'Please enter a valid Email!' },
+          ]}
+        >
+          <Input
+            placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            required
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-        </div>
-        <div>
-          <input
-            type="password"
+        </Form.Item>
+
+        <Form.Item
+          label="Password"
+          name="password"
+          rules={[{ required: true, message: 'Please input your Password!' }]}
+        >
+          <Input.Password
+            placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-            className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            iconRender={(visible) =>
+              visible ? <EyeTwoTone /> : <EyeInvisibleOutlined />
+            }
           />
-        </div>
-        <button
-          type="submit"
-          className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition"
-        >
-          Login
-        </button>
-      </form>
-      {message && <p className="mt-4 text-center text-red-500">{message}</p>}
+        </Form.Item>
+
+        <Form.Item>
+          <Button type="primary" htmlType="submit" block>
+            Login
+          </Button>
+        </Form.Item>
+      </Form>
+      {message && (
+        <Text type="danger" className="text-center">
+          {message}
+        </Text>
+      )}
     </div>
   );
 };
