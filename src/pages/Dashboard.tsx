@@ -1,5 +1,5 @@
 // ./src/pages/Dashboard.tsx
-import React, { useState, useEffect, useContext, useMemo } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 import {
@@ -41,7 +41,8 @@ const Dashboard: React.FC = () => {
     setIsSidebarCollapsed(false);
   };
 
-  const fetchTags = async () => {
+  // Memoize fetchTags to prevent it from being recreated on every render
+  const fetchTags = useCallback(async () => {
     try {
       const allTags = await getAllTags();
       setTags(allTags);
@@ -49,7 +50,7 @@ const Dashboard: React.FC = () => {
       console.error('Failed to fetch tags:', error);
       messageApi.error('Failed to fetch tags.');
     }
-  };
+  }, [messageApi]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -61,6 +62,8 @@ const Dashboard: React.FC = () => {
         const userBlogs = await getUserBlogs(user.objectId, page, limit);
         if (userBlogs.length < limit) {
           setHasMoreBlogs(false);
+        } else {
+          setHasMoreBlogs(true);
         }
         if (page === 1) {
           setBlogs(userBlogs);
@@ -74,7 +77,7 @@ const Dashboard: React.FC = () => {
       }
     };
     fetchData();
-  }, [user, navigate, messageApi, page]);
+  }, [user, navigate, messageApi, page, fetchTags]);
 
   const handleEditSave = async (blogId: string, content: string) => {
     try {
@@ -100,18 +103,25 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleCreateBlog = (newBlog: Blog) => {
-    setBlogs([newBlog, ...blogs]);
-    messageApi.success('Blog created successfully.');
-    fetchTags();
+  const handleCreateBlog = async (newBlog: Blog) => {
+    try {
+      setBlogs([newBlog, ...blogs]);
+      messageApi.success('Blog created successfully.');
+      await fetchTags();
+    } catch (error) {
+      const leanCloudError = error as { error: string };
+      messageApi.error(leanCloudError.error || 'Failed to create blog.');
+    }
   };
 
+  // Helper function to strip HTML tags from content
   const stripHTML = (html: string): string => {
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';
   };
 
+  // Memoize filteredBlogs to optimize performance
   const filteredBlogs = useMemo(() => {
     return blogs.filter(blog => {
       let matchesSearchTerm = true;
@@ -178,7 +188,7 @@ const Dashboard: React.FC = () => {
                 ))}
                 {hasMoreBlogs && (
                   <div className="text-center my-4">
-                    <Button onClick={() => setPage(page + 1)}>Load More</Button>
+                    <Button onClick={() => setPage(prevPage => prevPage + 1)}>Load More</Button>
                   </div>
                 )}
               </div>
