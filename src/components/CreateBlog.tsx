@@ -1,3 +1,4 @@
+// ./src/components/CreateBlog.tsx
 import './tiptap.scss';
 
 import React, { useContext, useRef, useEffect } from 'react';
@@ -13,7 +14,6 @@ import OrderedList from '@tiptap/extension-ordered-list';
 import ListItem from '@tiptap/extension-list-item';
 import Highlight from '@tiptap/extension-highlight';
 import Underline from '@tiptap/extension-underline';
-import { TagsContext } from '../contexts/TagsContext';
 import { ReactRenderer } from '@tiptap/react';
 import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionProps } from '@tiptap/suggestion';
@@ -32,6 +32,8 @@ import {
 
 interface CreateBlogFormProps {
   onCreate: (newBlog: Blog) => void;
+  tags: Tag[];
+  refreshTags: () => void;
 }
 
 interface SuggestionResult {
@@ -41,14 +43,12 @@ interface SuggestionResult {
   onExit: () => void;
 }
 
-const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
+const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate, tags, refreshTags }) => {
   const { user } = useContext(AuthContext);
-  const { tags, refreshTags } = useContext(TagsContext); // Added refreshTags
-  const tagsRef = useRef<Tag[]>(tags); // Store tags in a ref to ensure they persist
+  const tagsRef = useRef<Tag[]>(tags);
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  // Ensure the ref gets updated when tags change
   useEffect(() => {
     tagsRef.current = tags;
   }, [tags]);
@@ -60,14 +60,12 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
       const availableTags = tagsRef.current;
       if (!availableTags || availableTags.length === 0) return [query];
 
-      // Filter existing tags based on the query
       const matchingTags = availableTags
         .map((tag) => tag.name)
         .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
 
-      // If no matching tags, include the query as a potential new tag
       if (matchingTags.length === 0 || !matchingTags.includes(query)) {
-        return [...matchingTags, query]; // Add the user's input as the last suggestion
+        return [...matchingTags, query];
       }
 
       return matchingTags;
@@ -142,16 +140,14 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
         HTMLAttributes: {
           class: 'mention',
         },
-        suggestion: suggestion, // Pass tags to the suggestion function
+        suggestion: suggestion,
       }),
     ],
     content: '',
   });
 
-  // Handler for form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Clear any existing messages
     messageApi.info('');
 
     if (!user) {
@@ -167,7 +163,6 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
     const content = editor.getHTML();
 
     try {
-      // Extract tags from content
       const parser = new DOMParser();
       const doc = parser.parseFromString(content, 'text/html');
       const mentionElements = doc.querySelectorAll('.mention');
@@ -178,29 +173,21 @@ const CreateBlogForm: React.FC<CreateBlogFormProps> = ({ onCreate }) => {
 
       const tagNames = Array.from(tagNamesSet).filter((name) => name.trim() !== '');
 
-      // Create the blog
       const newBlog = await createBlog(content);
 
-      // Handle tags
       for (const tagName of tagNames) {
         let tag = tagsRef.current.find((t) => t.name === tagName);
         if (!tag) {
-          // Create new tag
           tag = await createTag(tagName);
-          // Refresh tags in context
-          refreshTags();
+          refreshTags(); // Refresh tags in parent
         }
-        // Add tag to blog
         await addTagToBlog(newBlog.objectId, tag.objectId);
       }
 
-      // Invoke the callback with the new blog
       onCreate(newBlog);
 
-      // Reset the editor content
       editor.commands.clearContent();
 
-      // Show success message
       messageApi.success('Blog created successfully.');
     } catch (error) {
       const leanCloudError = error as LeanCloudError;

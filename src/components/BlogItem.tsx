@@ -1,17 +1,19 @@
 // ./src/components/BlogItem.tsx
 
 import React, { useState } from 'react';
-import { Blog } from '../services/blogService';
+import { Blog, Tag } from '../services/blogService';
 import DisplayBlog from './DisplayBlog';
 import EditBlog from './EditBlog';
 
 interface BlogItemProps {
   blog: Blog;
+  tags: Tag[];
   onEditSave: (blogId: string, content: string) => void;
   onDelete: (blogId: string) => void;
+  refreshTags: () => void;
 }
 
-const BlogItem: React.FC<BlogItemProps> = ({ blog, onEditSave, onDelete }) => {
+const BlogItem: React.FC<BlogItemProps> = ({ blog, tags, onEditSave, onDelete, refreshTags }) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const handleEdit = () => {
@@ -35,9 +37,11 @@ const BlogItem: React.FC<BlogItemProps> = ({ blog, onEditSave, onDelete }) => {
     <>
       {isEditing ? (
         <EditBlog
+          tags={tags}
           blog={blog}
           onSave={handleSaveEdit}
           onCancel={handleCancelEdit}
+          refreshTags={refreshTags}
         />
       ) : (
         <DisplayBlog

@@ -2,24 +2,22 @@
 import React, { useContext } from 'react';
 import { Tooltip, Dropdown, Menu, Button, Space } from 'antd';
 import { AuthContext } from '../contexts/AuthContext';
-import { TagsContext } from '../contexts/TagsContext';
 import Heatmap from './Heatmap';
 import { LogoutOutlined, MenuFoldOutlined, DownOutlined } from '@ant-design/icons';
-import { Blog, Tag } from '../services/blogService';  // Import Blog and Tag
-import moment from 'moment';  // To compute days since joined
+import { Blog, Tag } from '../services/blogService';
+import moment from 'moment';
 
 interface SidebarProps {
   isCollapsed: boolean;
   onCollapse: () => void;
   blogs: Blog[];
   setSelectedTag: (tag: Tag | null) => void;
+  tags: Tag[];
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSelectedTag }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSelectedTag, tags }) => {
   const { user, logout } = useContext(AuthContext);
-  const { tags } = useContext(TagsContext);
 
-  // User dropdown menu
   const userMenu = (
     <Menu>
       <Menu.Item key="preferences">
@@ -41,7 +39,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
     </Menu>
   );
 
-  // Compute tag counts using useMemo to prevent unnecessary computations
   const tagCounts = React.useMemo(() => {
     const counts: { [tagId: string]: number } = {};
     blogs.forEach(blog => {
@@ -52,9 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
     return counts;
   }, [blogs]);
 
-  // Calculate days since user joined
   const daysSinceJoined = user ? moment().diff(moment(user.createdAt), 'days') : 0;
-  // Number of blogs and tags
   const numberOfBlogs = blogs.length;
   const numberOfTags = tags.length;
 
@@ -64,7 +59,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
         isCollapsed ? '-translate-x-full' : 'translate-x-0'
       } md:static md:translate-x-0 md:flex-shrink-0 overflow-y-auto z-10`}
     >
-      {/* User Information at the Top */}
       {user && (
         <div>
           <div className="mb-4 flex items-center justify-between">
@@ -83,7 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
             </Tooltip>
           </div>
 
-          {/* Statistics Row */}
           <div className="flex justify-between mb-6">
             <div className="text-center">
               <div className="text-2xl font-bold">{numberOfBlogs}</div>
@@ -101,14 +94,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, onCollapse, blogs, setSe
         </div>
       )}
 
-      {/* Heatmap Component */}
       {user && (
         <div className="mt-6">
           <Heatmap />
         </div>
       )}
 
-      {/* Display all tags */}
       <div className="mt-6">
         <h2 className="text-lg font-semibold mb-2">Tags</h2>
         <div className="space-y-1">

@@ -1,6 +1,6 @@
 // ./src/components/EditBlog.tsx
-import React, { useRef, useEffect, useContext } from 'react';
-import { Blog } from '../services/blogService';
+import React, { useRef, useEffect } from 'react';
+import { Blog, Tag } from '../services/blogService';
 import { message, Button } from 'antd';
 import { EditorContent, useEditor } from '@tiptap/react';
 import Mention from '@tiptap/extension-mention';
@@ -15,8 +15,6 @@ import tippy, { Instance as TippyInstance } from 'tippy.js';
 import { SuggestionProps } from '@tiptap/suggestion';
 import MentionList from './MentionList';
 import './tiptap.scss';
-// Removed unused AuthContext import
-import { TagsContext } from '../contexts/TagsContext';
 import { LeanCloudError } from '../services/authService';
 import { addTagToBlog, removeTagFromBlog, createTag } from '../services/blogService';
 import Typography from '@tiptap/extension-typography';
@@ -33,6 +31,8 @@ interface EditBlogProps {
   blog: Blog;
   onSave: (blogId: string, content: string) => void;
   onCancel: () => void;
+  tags: Tag[];
+  refreshTags: () => void;
 }
 
 interface SuggestionResult {
@@ -42,9 +42,7 @@ interface SuggestionResult {
   onExit: () => void;
 }
 
-const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
-  // Removed unused user variable
-  const { tags, refreshTags } = useContext(TagsContext);
+const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel, tags, refreshTags }) => {
   const tagsRef = useRef(tags);
 
   const [messageApi, contextHolder] = message.useMessage();
@@ -60,14 +58,12 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
       const availableTags = tagsRef.current;
       if (!availableTags || availableTags.length === 0) return [query];
 
-      // Filter existing tags based on the query
       const matchingTags = availableTags
         .map((tag) => tag.name)
         .filter((name) => name.toLowerCase().startsWith(query.toLowerCase()));
 
-      // If no matching tags, include the query as a potential new tag
       if (matchingTags.length === 0 || !matchingTags.includes(query)) {
-        return [...matchingTags, query]; // Add the user's input as the last suggestion
+        return [...matchingTags, query];
       }
 
       return matchingTags;
@@ -156,7 +152,6 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
     const content = editor.getHTML();
 
     try {
-      // Extract tags from new content
       const parser = new DOMParser();
       const doc = parser.parseFromString(content, 'text/html');
       const mentionElements = doc.querySelectorAll('.mention');
@@ -166,35 +161,27 @@ const EditBlog: React.FC<EditBlogProps> = ({ blog, onSave, onCancel }) => {
       });
       const newTagNames = Array.from(tagNamesSet).filter((name) => name.trim() !== '');
 
-      // Get existing tag names for the blog
       const existingTagNames = blog.tags ? blog.tags.map((tag) => tag.name) : [];
 
-      // Determine tags to add and remove
       const tagsToAdd = newTagNames.filter((name) => !existingTagNames.includes(name));
       const tagsToRemove = existingTagNames.filter((name) => !newTagNames.includes(name));
 
-      // Update tags
       for (const tagName of tagsToAdd) {
         let tag = tagsRef.current.find((t) => t.name === tagName);
         if (!tag) {
-          // Create new tag
           tag = await createTag(tagName);
-          // Refresh tags in context
           refreshTags();
         }
-        // Add tag to blog
         await addTagToBlog(blog.objectId, tag.objectId);
       }
 
       for (const tagName of tagsToRemove) {
         const tag = tagsRef.current.find((t) => t.name === tagName);
         if (tag) {
-          // Remove tag from blog
           await removeTagFromBlog(blog.objectId, tag.objectId);
         }
       }
 
-      // Save the edited content
       onSave(blog.objectId, content);
     } catch (error) {
       const leanCloudError = error as LeanCloudError;

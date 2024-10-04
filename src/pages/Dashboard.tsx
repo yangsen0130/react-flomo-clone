@@ -8,6 +8,7 @@ import {
   Tag,
   updateBlog,
   deleteBlog,
+  getAllTags
 } from '../services/blogService';
 import CreateBlogForm from '../components/CreateBlog';
 import { message, Button } from 'antd';
@@ -18,20 +19,19 @@ import SearchBar from '../components/SearchBar';
 const Dashboard: React.FC = () => {
   const { user } = useContext(AuthContext);
   const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
   const navigate = useNavigate();
 
   const [messageApi, contextHolder] = message.useMessage();
 
-  // State and handlers for sidebar collapse functionality
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Pagination states
   const [page, setPage] = useState(1);
   const [hasMoreBlogs, setHasMoreBlogs] = useState(true);
-  const limit = 10; // Number of blogs per page
+  const limit = 10;
 
   const handleCollapseSidebar = () => {
     setIsSidebarCollapsed(true);
@@ -41,15 +41,24 @@ const Dashboard: React.FC = () => {
     setIsSidebarCollapsed(false);
   };
 
+  const fetchTags = async () => {
+    try {
+      const allTags = await getAllTags();
+      setTags(allTags);
+    } catch (error) {
+      console.error('Failed to fetch tags:', error);
+      messageApi.error('Failed to fetch tags.');
+    }
+  };
+
   useEffect(() => {
-    const fetchUserAndBlogs = async () => {
+    const fetchData = async () => {
       if (!user) {
         navigate('/login');
         return;
       }
       try {
         const userBlogs = await getUserBlogs(user.objectId, page, limit);
-        // If no more blogs are returned, set hasMoreBlogs to false
         if (userBlogs.length < limit) {
           setHasMoreBlogs(false);
         }
@@ -58,12 +67,13 @@ const Dashboard: React.FC = () => {
         } else {
           setBlogs((prevBlogs) => [...prevBlogs, ...userBlogs]);
         }
+        await fetchTags();
       } catch (error) {
         console.error('Failed to fetch blogs:', error);
         messageApi.error('Failed to fetch blogs.');
       }
     };
-    fetchUserAndBlogs();
+    fetchData();
   }, [user, navigate, messageApi, page]);
 
   const handleEditSave = async (blogId: string, content: string) => {
@@ -71,6 +81,7 @@ const Dashboard: React.FC = () => {
       const updatedBlog = await updateBlog(blogId, content);
       setBlogs(blogs.map((blog) => (blog.objectId === blogId ? updatedBlog : blog)));
       messageApi.success('Blog updated successfully.');
+      await fetchTags();
     } catch (error) {
       const leanCloudError = error as { error: string };
       messageApi.error(leanCloudError.error || 'Failed to update blog.');
@@ -92,27 +103,24 @@ const Dashboard: React.FC = () => {
   const handleCreateBlog = (newBlog: Blog) => {
     setBlogs([newBlog, ...blogs]);
     messageApi.success('Blog created successfully.');
+    fetchTags();
   };
 
-  // Function to strip HTML tags from content
   const stripHTML = (html: string): string => {
     const div = document.createElement('div');
     div.innerHTML = html;
     return div.textContent || div.innerText || '';
   };
 
-  // Use useMemo to memoize filteredBlogs and prevent unnecessary computations
   const filteredBlogs = useMemo(() => {
     return blogs.filter(blog => {
       let matchesSearchTerm = true;
       let matchesTag = true;
 
-      // If a search term is set, check if content matches
       if (searchTerm) {
         matchesSearchTerm = stripHTML(blog.content).toLowerCase().includes(searchTerm.toLowerCase());
       }
 
-      // If a tag is selected, check if blog has that tag
       if (selectedTag) {
         matchesTag = (blog.tags && blog.tags.some(tag => tag.objectId === selectedTag.objectId)) ?? false;
       }
@@ -125,16 +133,15 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="flex max-w-[960px] w-full mx-auto">
-      {/* Sidebar */}
       {!isSidebarCollapsed && (
         <Sidebar
           isCollapsed={isSidebarCollapsed}
           onCollapse={handleCollapseSidebar}
           blogs={blogs}
           setSelectedTag={setSelectedTag}
+          tags={tags}
         />
       )}
-      {/* Main Content */}
       <main className="flex-grow container max-w-[720px] mx-auto h-screen overflow-hidden">
         {contextHolder}
 
@@ -149,7 +156,7 @@ const Dashboard: React.FC = () => {
           />
 
           <div className="flex-shrink-0 mb-4">
-            <CreateBlogForm onCreate={handleCreateBlog} />
+            <CreateBlogForm onCreate={handleCreateBlog} tags={tags} refreshTags={fetchTags} />
           </div>
 
           <div className="flex-grow overflow-y-auto">
@@ -165,9 +172,10 @@ const Dashboard: React.FC = () => {
                     blog={blog}
                     onEditSave={handleEditSave}
                     onDelete={handleDeleteBlog}
+                    tags={tags}
+                    refreshTags={fetchTags}
                   />
                 ))}
-                {/* Load More Button */}
                 {hasMoreBlogs && (
                   <div className="text-center my-4">
                     <Button onClick={() => setPage(page + 1)}>Load More</Button>
