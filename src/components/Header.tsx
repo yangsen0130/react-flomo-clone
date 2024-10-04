@@ -1,3 +1,4 @@
+// ./src/components/Header.tsx
 import React, { useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
@@ -15,7 +16,8 @@ const Header: React.FC = () => {
     <header className="bg-blue-600 text-white p-4 shadow-md">
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <Link to="/" className="text-xl font-bold">
+          {/* Updated Link from "/" to "/dashboard" */}
+          <Link to="/dashboard" className="text-xl font-bold">
             My Blog
           </Link>
           {user && (

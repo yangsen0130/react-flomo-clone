@@ -14,11 +14,18 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
+        {/* Root Route: Redirect based on authentication status */}
+        <Route
+          path="/"
+          element={
+            user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+          }
+        />
+
         {/* Public Routes with Header */}
         <Route element={<PublicLayout />}>
-          <Route path="/" element={<Home />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
         </Route>
 
         {/* Protected Routes */}
@@ -41,6 +48,8 @@ const App: React.FC = () => {
 };
 
 // Public Layout Component with Header
+// import { Outlet } from 'react-router-dom';
+
 const PublicLayout: React.FC = () => (
   <div className="flex flex-col min-h-screen">
     <Header />
